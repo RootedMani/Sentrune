@@ -84,7 +84,7 @@ def run(config_path: str = "config/modeling.yaml") -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Train and walk-forward validate the trading assistant modeling layer")
+    parser = argparse.ArgumentParser(description="Train and walk-forward validate the Sentrune modeling layer")
     parser.add_argument("--config", default="config/modeling.yaml")
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args()

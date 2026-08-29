@@ -1,5 +1,7 @@
-# The Trader's Assistant
-### An Explainable, Multi-Source Market Intelligence & Alerting Platform
+# Sentrune
+
+# Sentrune: The Trader's Assistant
+### Sentrune: An Explainable, Multi-Source Market Intelligence & Alerting Platform
 
 ---
 
@@ -7,19 +9,19 @@
 
 Retail investors today face an uncomfortable asymmetry: they are asked to make decisions with the same market data institutions use, but without the institutional tooling that turns that data into structured, contextualized insight, and without the staff whose job is to watch every relevant source and flag what actually matters. Professional trading desks have analysts monitoring news wires, tracking specific influential voices, and pushing time-sensitive alerts to traders the moment something relevant happens. Retail investors, by contrast, are left checking a charting app, a news feed, and a handful of social accounts manually, hoping they don't miss the moment something important breaks.
 
-This white paper describes a prototype platform built to close that gap directly. At its core, the platform is **a personal market assistant for traders**: it continuously monitors news, market data, and social sources, produces a running report of what happened and why it matters, and pushes real-time alerts when something the trader cares about occurs — a named source they follow posting, a sentiment or volume spike, or a technical signal crossing a threshold. Every trader configures this assistant to their own interests: which sources and people to follow, which assets to track, and which categories of event should trigger a notification versus simply appear in their daily report.
+This white paper describes Sentrune, a prototype platform built to close that gap directly. At its core, Sentrune is **a personal market assistant for traders**: it continuously monitors news, market data, and social sources, produces a running report of what happened and why it matters, and pushes real-time alerts when something the trader cares about occurs — a named source they follow posting, a sentiment or volume spike, or a technical signal crossing a threshold. Every trader configures Sentrune to their own interests: which sources and people to follow, which assets to track, and which categories of event should trigger a notification versus simply appear in their daily report.
 
-Layered into this assistant, rather than sitting apart from it, is a machine learning prediction engine that produces probability distributions over near-term price outcomes (down, flat, or up beyond a defined threshold) for each tracked asset, along with a plain-English explanation of what is driving that estimate. The prediction layer is not a separate feature bolted onto a reporting tool — it actively shapes the reporting itself. A news event or sentiment spike is surfaced with more or less prominence depending on whether it aligns with, contradicts, or has already been anticipated by the model's current read of an asset's technical and sentiment state. The result is a report that doesn't just list what happened, but tells the trader *why it matters right now*, informed by the same model producing the platform's probability estimates.
+Layered into this assistant, rather than sitting apart from it, is a machine learning prediction engine that produces probability distributions over near-term price outcomes (down, flat, or up beyond a defined threshold) for each tracked asset, along with a plain-English explanation of what is driving that estimate. The prediction layer is not a separate feature bolted onto a reporting tool — it actively shapes the reporting itself. A news event or sentiment spike is surfaced with more or less prominence depending on whether it aligns with, contradicts, or has already been anticipated by the model's current read of an asset's technical and sentiment state. The result is a report that doesn't just list what happened, but tells the trader *why it matters right now*, informed by the same model producing Sentrune's probability estimates.
 
-Two design choices distinguish this product from the broader field of "AI trading" tools. First, the platform makes no claim to forecast exact prices or guarantee returns; prediction outputs are explicitly probabilistic and are benchmarked against naive baselines (buy-and-hold, moving-average crossover) so that any genuine edge — or lack thereof — is visible rather than asserted. Second, explainability and personalization are treated as core product features: every report and every alert is traceable to a specific source or signal, and every trader's experience is shaped by sources and thresholds they themselves chose, not a one-size-fits-all feed.
+Two design choices distinguish Sentrune from the broader field of "AI trading" tools. First, the platform makes no claim to forecast exact prices or guarantee returns; prediction outputs are explicitly probabilistic and are benchmarked against naive baselines (buy-and-hold, moving-average crossover) so that any genuine edge — or lack thereof — is visible rather than asserted. Second, explainability and personalization are treated as core product features: every report and every alert is traceable to a specific source or signal, and every trader's experience is shaped by sources and thresholds they themselves chose, not a one-size-fits-all feed.
 
-The prototype is built entirely on free-tier data sources and open-source tooling, running end-to-end at zero infrastructure cost, with a live, shareable demo. This white paper documents the product rationale, the technical architecture, the honest limitations of the approach, the competitive landscape, a realistic path to revenue, and what a funding round would specifically unlock.
+The prototype is built entirely on free-tier data sources and open-source tooling, running end-to-end at zero infrastructure cost, with a live, shareable demo. This white paper documents Sentrune rationale, the technical architecture, the honest limitations of the approach, the competitive landscape, a realistic path to revenue, and what a funding round would specifically unlock.
 
 ---
 
 ## 2. Problem Statement
 
-The common framing of this problem — "investing is hard for beginners" — is too generic to be useful, and it is not the gap this product addresses. Charting tools, brokerage apps, and financial media have made basic market information more accessible than ever. The actual gap is more specific, and it sits at four levels.
+The common framing of this problem — "investing is hard for beginners" — is too generic to be useful, and it is not the gap Sentrune addresses. Charting tools, brokerage apps, and financial media have made basic market information more accessible than ever. The actual gap is more specific, and it sits at four levels.
 
 **First, the attention gap.** Markets move on information that appears continuously and unpredictably throughout the day — a headline, an influential trader's post, a sudden volume spike. Institutional desks solve this with staff whose full-time job is to watch for it. Retail investors do not have this, and the result is not that they lack access to the information, but that they are structurally likely to see it late, if at all, unless they are watching constantly — which is not a reasonable expectation for someone with a full-time job outside of trading.
 
@@ -29,13 +31,13 @@ The common framing of this problem — "investing is hard for beginners" — is 
 
 **Fourth, the honesty gap.** A significant share of retail-facing "AI trading" products imply or directly claim predictive accuracy that is not achievable given the efficiency of liquid public markets, and do not benchmark their outputs against trivial baselines. A tool that is honest about what probabilistic modeling can and cannot do — and proves it against naive baselines rather than asserting it — is solving a real, underserved problem: making institutional-style monitoring and rigor legible and personal to a non-expert audience, without pretending markets are more predictable than they are.
 
-This is the specific gap the platform targets: not access to data, but continuous attention, synthesis, personalization, and honesty about uncertainty, delivered in a form usable by someone without a data science or finance background.
+This is the specific gap Sentrune targets: not access to data, but continuous attention, synthesis, personalization, and honesty about uncertainty, delivered in a form usable by someone without a data science or finance background.
 
 ---
 
 ## 3. Product Overview
 
-The platform is a personal market assistant for retail investors and active traders. It has two tightly integrated components.
+Sentrune is a personal market assistant for retail investors and active traders. It has two tightly integrated components.
 
 **The intelligence and alerting layer** continuously monitors news, technical market data, and social sources for each asset a trader follows, and produces two things: a running report — a digestible summary of what happened and why it matters, refreshed throughout the day — and real-time notifications when something the trader has configured as important occurs. Traders customize both the sources they follow (a curated default list of well-known analysts, exchange accounts, and project founders, plus any individual sources they add themselves) and what should trigger an interruption versus a mention in the next report: a followed source posting, a sentiment or mention-volume spike even from unattributed crowd activity, or a technical indicator crossing a threshold they define.
 
@@ -153,7 +155,7 @@ Stated plainly, without hedging:
 - **The alerting layer cannot catch everything.** It is bounded by the sources it can legally and technically monitor — most importantly, it cannot yet monitor specific X/Twitter accounts in real time, which is a real gap for traders whose most important sources are on that platform specifically. This is stated openly rather than glossed over, and is the single most consequential item on the funded roadmap (Section 8).
 - Sentiment and news data quality is dependent on free-tier sources for the prototype, which have coverage and rate-limit constraints a funded, paid-data version would not have.
 
-Where a specific claim about model performance would require actual backtest results, this document does not invent numbers — those results are noted as **to be validated during prototype testing**, and will be reported in the platform's own backtest view, including any periods of underperformance.
+Where a specific claim about model performance would require actual backtest results, this document does not invent numbers — those results are noted as **to be validated during prototype testing**, and will be reported in Sentrune's own backtest view, including any periods of underperformance.
 
 ---
 
@@ -163,13 +165,13 @@ Existing retail-facing tools generally fall into three categories relevant here:
 
 **Charting platforms** (e.g., TradingView) give users powerful technical analysis tools but leave synthesis, sentiment, and alerting on named sources entirely to the user, and generally do not offer per-trader-configurable event alerting tied to specific people.
 
-**Generic "AI stock picker" apps** produce a single opaque output — a buy/sell/hold call, a star rating — without transparent methodology or baseline benchmarking. This platform is deliberately not built to resemble this category.
+**Generic "AI stock picker" apps** produce a single opaque output — a buy/sell/hold call, a star rating — without transparent methodology or baseline benchmarking. Sentrune is deliberately not built to resemble this category.
 
 **Generic news/alert aggregators** (e.g., broad financial news apps with push notifications) provide breaking-news alerts but are not asset-model-aware: a headline is pushed with the same generic urgency regardless of whether it actually aligns with anything happening technically or in sentiment for that specific asset, and they do not typically support following specific individual social accounts as first-class, per-user configurable alert sources alongside a market model.
 
 The differentiation here is not a claim of superior predictive accuracy. It is:
 
-- **Model-aware reporting:** events are surfaced and weighted using the same signal that drives the platform's probability estimates, not as an undifferentiated news firehose.
+- **Model-aware reporting:** events are surfaced and weighted using the same signal that drives Sentrune's probability estimates, not as an undifferentiated news firehose.
 - **Personalization:** each trader configures their own followed sources and alert thresholds, rather than receiving a one-size-fits-all feed.
 - **Explainability:** every probability estimate and every alert is traceable to specific technical and sentiment factors, not a black box.
 - **Transparent backtesting:** performance shown against naive baselines, including underperforming periods.
@@ -186,7 +188,7 @@ The competitive bet is that a segment of retail traders — likely a more engage
 - **B2B licensing:** licensing the intelligence/alerting engine itself — including the personalized source-tracking and event-classification logic — to other trading or investing platforms that want to add this kind of assistant layer without building it in-house.
 - **Premium data partnerships:** partnering with data providers, and eventually with X/Twitter's official API, for higher-quality, lower-latency, and broader-coverage feeds, potentially with revenue-sharing or co-marketing arrangements.
 
-**Regulatory considerations remain a first-class constraint.** The platform is explicitly not investment advice. Personalization and alerting introduce an additional nuance worth naming directly: as the system becomes more tailored to an individual trader's followed sources, thresholds, and configured interests, the product moves closer — in user experience, if not in substance — to something that feels individualized. The product design intentionally keeps the underlying output general and non-personalized (the *model's* estimate is the same for every user watching a given asset; only *which* information reaches a given trader, and how urgently, is personalized). This distinction should be maintained deliberately as the product evolves and should be reviewed with legal counsel before any feature blurs it further.
+**Regulatory considerations remain a first-class constraint.** Sentrune is explicitly not investment advice. Personalization and alerting introduce an additional nuance worth naming directly: as the system becomes more tailored to an individual trader's followed sources, thresholds, and configured interests, Sentrune moves closer — in user experience, if not in substance — to something that feels individualized. Sentrune's design intentionally keeps the underlying output general and non-personalized (the *model's* estimate is the same for every user watching a given asset; only *which* information reaches a given trader, and how urgently, is personalized). This distinction should be maintained deliberately as Sentrune evolves and should be reviewed with legal counsel before any feature blurs it further.
 
 ---
 
@@ -194,7 +196,7 @@ The competitive bet is that a segment of retail traders — likely a more engage
 
 **Prototype stage (current — $0 budget):** the six-layer system described above, covering 3–5 large-cap US equities and BTC/ETH, with personalized source-following, in-app/email alerting, model-aware reporting, and prediction outputs, running entirely on free-tier data and open-source tooling, with a live public demo.
 
-**Funded seed stage:** official X/Twitter API access to extend named-source tracking and alerting to X specifically (the single most requested and most consequential upgrade given the product's positioning); push/SMS notification infrastructure; expansion to a larger and more diverse asset universe; migration from SQLite to hosted Postgres/Supabase to support concurrent users and real-time alerting at scale; continued development of the experimental deep-learning model track.
+**Funded seed stage:** official X/Twitter API access to extend named-source tracking and alerting to X specifically (the single most requested and most consequential upgrade given Sentrune's positioning); push/SMS notification infrastructure; expansion to a larger and more diverse asset universe; migration from SQLite to hosted Postgres/Supabase to support concurrent users and real-time alerting at scale; continued development of the experimental deep-learning model track.
 
 **Growth stage:** premium data partnerships, B2B licensing of the intelligence/alerting engine, a formal API product for developers, and — contingent on legal review — further personalization features evaluated against the advisory-line distinction in Section 7.
 
@@ -205,23 +207,23 @@ The competitive bet is that a segment of retail traders — likely a more engage
 **Technical risks:**
 - **Overfitting**, mitigated structurally by walk-forward validation and baseline comparison.
 - **Data quality dependency on free tiers**, a real limitation until paid data partnerships are in place.
-- **Alert fatigue:** a personalization feature that is too aggressive by default, or poorly tuned, risks becoming noise rather than signal — the same failure mode the product is explicitly trying to avoid relative to competitors. Default alert thresholds and onboarding need deliberate design attention, not just technical capability.
+- **Alert fatigue:** a personalization feature that is too aggressive by default, or poorly tuned, risks becoming noise rather than signal — the same failure mode Sentrune is explicitly trying to avoid relative to competitors. Default alert thresholds and onboarding need deliberate design attention, not just technical capability.
 
 **Market risks:**
 - **Regulatory scrutiny of AI-driven financial tools**, requiring continued legal review, especially as personalization increases.
 - **Competition**, from well-funded charting/analytics incumbents, generic AI stock-picker entrants, and generic news-alert apps that could add similar features.
 
-**A note on end-user market risk, stated without qualification:** no system of this kind — nor any decision-support or alerting tool — can eliminate market risk for its end users. Markets carry inherent risk regardless of the quality or timeliness of information applied to them, and no aspect of this product's design or messaging should be read as suggesting otherwise.
+**A note on end-user market risk, stated without qualification:** no system of this kind — nor any decision-support or alerting tool — can eliminate market risk for its end users. Markets carry inherent risk regardless of the quality or timeliness of information applied to them, and no aspect of Sentrune's design or messaging should be read as suggesting otherwise.
 
 ---
 
 ## 10. Ask
 
-This white paper supports a fundraising conversation for a company at the prototype stage: a working, zero-cost, live-demoable personalized trading assistant — combining model-aware reporting, configurable real-time alerting, and explainable probabilistic prediction — not yet backed by paid data infrastructure or a team beyond the founder.
+This white paper supports a fundraising conversation for a company at the prototype stage: a working, zero-cost, live-demoable Sentrune trading assistant — combining model-aware reporting, configurable real-time alerting, and explainable probabilistic prediction — not yet backed by paid data infrastructure or a team beyond the founder.
 
 Funding would specifically unlock:
 - **Paid data access**, most importantly an official X/Twitter API integration to extend the platform's named-source alerting to X specifically, plus push/SMS delivery infrastructure and higher-tier market data feeds.
 - **Compute**, moving beyond free-tier Colab/Kaggle GPU access for more extensive model training and the secondary deep-learning research track.
 - **A small initial team**, to move from a solo prototype build to a properly resourced product and engineering effort, and to bring in the legal/compliance review the regulatory considerations in Section 7 require as personalization and user base scale.
 
-The founder's position is straightforward: the prototype demonstrates that a transparent, explainable, personalized trading assistant — combining real-time event awareness with honestly-benchmarked prediction — is technically achievable at zero budget, on sources that are free and fully compliant today. What it has not yet demonstrated — because it cannot, without funding — is the same assistant with full named-source coverage on X/Twitter, push-scale alert delivery, and paid-tier data depth. That is what this round is for.
+The founder's position is straightforward: the prototype demonstrates that Sentrune, a transparent, explainable, personalized trading assistant — combining real-time event awareness with honestly-benchmarked prediction — is technically achievable at zero budget, on sources that are free and fully compliant today. What it has not yet demonstrated — because it cannot, without funding — is the same assistant with full named-source coverage on X/Twitter, push-scale alert delivery, and paid-tier data depth. That is what this round is for.

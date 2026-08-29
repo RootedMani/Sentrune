@@ -11,6 +11,7 @@ pretending data exists.
 """
 from __future__ import annotations
 
+import os
 import sqlite3
 from pathlib import Path
 
@@ -20,8 +21,8 @@ import streamlit as st
 
 # app.py sits at src/trading_assistant/dashboard/ -> project root is 3 levels up.
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_DB = ROOT / "data" / "trading_assistant.sqlite3"
-MODEL_ROOT = ROOT / "models"
+DEFAULT_DB = Path(os.getenv("DB_PATH", str(ROOT / "data" / "trading_assistant.sqlite3")))
+MODEL_ROOT = Path(os.getenv("SENTRUNE_MODEL_DIR", str(ROOT / "models")))
 
 LABELS = {0: "down", 1: "flat", 2: "up"}
 TECHNICAL_COLUMNS = ["sma_20", "sma_50", "sma_200", "ema_12", "ema_26", "macd", "macd_signal", "macd_histogram", "rsi_14", "stoch_k", "stoch_d", "bb_lower", "bb_middle", "bb_upper", "atr_14", "obv", "volume_sma_20"]
@@ -159,8 +160,8 @@ def latest_prediction(db_path: str, asset_id: int, interval: str) -> dict:
     if not path.is_absolute():
         # Paths are recorded relative to the project root ("models/<id>/x.joblib").
         # The MODEL_ROOT fallback covers artifacts saved under older layouts.
-        candidates = [ROOT / path, MODEL_ROOT / path]
-        path = next((c for c in candidates if c.exists()), ROOT / path)
+        candidates = [MODEL_ROOT / path, ROOT / path]
+        path = next((c for c in candidates if c.exists()), MODEL_ROOT / path)
     if not path.exists():
         return {"error": f"model artifact missing: {path}"}
     artifact = joblib.load(path)
@@ -211,7 +212,7 @@ def hint_for(counts: dict[str, int], has_ingest_log: bool) -> list[str]:
 
 def main() -> None:
     st.title("Sentrune")
-    st.caption("Prototype - probabilistic, explainable market intelligence. Read-only view over the pipeline database.")
+    st.caption("Sentrune prototype - probabilistic, explainable market intelligence. Read-only view over the pipeline database.")
 
     db_path = st.sidebar.text_input("Database", str(DEFAULT_DB))
     if not Path(db_path).exists():

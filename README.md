@@ -1,7 +1,7 @@
 # Sentrune (prototype)
 
-Free-tier market intelligence + explainable prediction prototype for retail traders.
-One installable package (`trading_assistant`) with three pipeline layers and a
+Sentrune is a free-tier market intelligence and explainable prediction prototype for retail traders.
+One installable Sentrune package (`trading_assistant`) with three pipeline layers and a
 read-only dashboard, all writing into one SQLite database. Probability, not
 certainty - the model outputs down/flat/up probabilities and is always compared
 against naive baselines.
@@ -49,6 +49,7 @@ docs/                      per-layer deep dives: data model, FinBERT, label form
 data/                      shared SQLite database (created on first run)
 models/                    trained LightGBM artifacts (created by `train`)
 white_paper/               investor-facing white paper
+docs/deployment.md         Python 3.13/3.14 and Render deployment guide
 FIXES.md                   changelog of every reviewed bug, fix, and restructure
 ```
 
@@ -56,6 +57,16 @@ Note: `data/` ships with a demo database built from real market data on 2026-08-
 (AAPL/MSFT ~2y daily bars, BTC/ETH ~1000 daily klines, trained models) so the dashboard
 works before your first ingest. Delete the `data/` and `models/` directories to
 start from scratch - `python run_pipeline.py all` rebuilds everything.
+
+## Render deployment
+
+The repository includes `requirements.txt`, `.python-version`, and `render.yaml` for deploying the read-only Streamlit dashboard to Render. Use Python 3.13 for the currently verified dependency stack. The full guide is in `docs/deployment.md`; it also explains the persistent-disk or Postgres changes required for live ingestion and model retraining.
+
+The Render Web Service start command is:
+
+```bash
+streamlit run src/trading_assistant/dashboard/app.py --server.port $PORT --server.address 0.0.0.0
+```
 
 ## What the dashboard shows
 

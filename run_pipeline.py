@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-DB_PATH = ROOT / "data" / "trading_assistant.sqlite3"
+DB_PATH = Path(os.getenv("DB_PATH", str(ROOT / "data" / "trading_assistant.sqlite3")))
 
 STEPS: dict[str, str] = {
     "ingest": "trading_assistant.ingest",
@@ -37,11 +37,8 @@ STEPS: dict[str, str] = {
 def preflight(need_streamlit: bool = False) -> None:
     """Fail with a clear setup message instead of a ModuleNotFoundError traceback."""
     if sys.version_info >= (3, 14):
-        print("Python 3.14+ is not supported yet: pandas-ta needs numba, and numba has")
-        print("no wheels for 3.14, so pip falls back to a source build that fails.")
-        print("Use Python 3.10-3.13 (3.12 recommended), e.g.:")
-        print("  conda create -n sentrune python=3.12 && conda activate sentrune")
-        raise SystemExit(1)
+        print("Warning: Python 3.14+ is experimental for this Sentrune dependency set.")
+        print("If installation or tests fail, use Python 3.13 or 3.12.")
     required = ["trading_assistant"] + (["streamlit"] if need_streamlit else [])
     missing = [name for name in required if importlib.util.find_spec(name) is None]
     if missing:
@@ -53,9 +50,8 @@ def preflight(need_streamlit: bool = False) -> None:
 
 
 def _env() -> dict[str, str]:
-    # DB_PATH pins every layer to the shared database even when a local .env
-    # or YAML carries a stale value; load_dotenv never overrides a live
-    # variable, and an absolute DB_PATH beats the YAML defaults.
+    # Preserve an externally configured DB_PATH (for example /var/data on Render).
+    # Fall back to the repository-local demo database for local development.
     return dict(os.environ, DB_PATH=str(DB_PATH))
 
 

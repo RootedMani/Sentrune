@@ -22,7 +22,8 @@ class Settings:
 def load_config(path: str = "config/modeling.yaml") -> Settings:
     with open(path, encoding="utf-8") as f:
         data: dict[str, Any] = yaml.safe_load(f) or {}
-    # DB_PATH (used by run_pipeline.py) wins over the YAML so the three layers
-    # always converge on one database regardless of CWD.
+    # Environment variables win over YAML so Render Web Services and Cron Jobs
+    # can share durable storage while local development keeps repository defaults.
     data["db_path"] = os.getenv("DB_PATH") or data.get("db_path", "data/trading_assistant.sqlite3")
+    data["model_dir"] = os.getenv("SENTRUNE_MODEL_DIR") or data.get("model_dir", "models")
     return Settings(**data)
