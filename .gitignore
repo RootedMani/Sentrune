@@ -1,4 +1,18 @@
-
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
 .venv/
+venv/
 
-.venv/
+# Local credentials
+.env
+
+# Runtime artifacts. The checked-in demo database/models below are kept for the
+# first Render dashboard deployment; newly generated runtime artifacts stay ignored.
+data/*.sqlite3
+models/
+!data/trading_assistant.sqlite3
+!models/
+!models/**/*.joblib

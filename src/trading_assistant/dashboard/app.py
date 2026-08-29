@@ -81,14 +81,14 @@ def load_news(db_path: str, asset_id: int, limit: int = 25) -> pd.DataFrame:
         # until then show the news honestly as 'not scored' instead of crashing.
         if table_exists(db_path, "text_sentiment"):
             query = """SELECT n.published_at, n.source_type, n.source_name, n.headline,
-                              COALESCE(s.label, 'not scored') sentiment
+                              n.body, n.url, COALESCE(s.label, 'not scored') sentiment
                        FROM news_items n
                        JOIN news_item_assets a ON a.news_item_id = n.id
                        LEFT JOIN text_sentiment s ON s.item_type='news' AND s.item_id = n.id
                        WHERE a.asset_id=? ORDER BY n.published_at DESC LIMIT ?"""
         else:
             query = """SELECT n.published_at, n.source_type, n.source_name, n.headline,
-                              'not scored' sentiment
+                              n.body, n.url, 'not scored' sentiment
                        FROM news_items n
                        JOIN news_item_assets a ON a.news_item_id = n.id
                        WHERE a.asset_id=? ORDER BY n.published_at DESC LIMIT ?"""
@@ -145,6 +145,31 @@ def load_validation_summary(db_path: str, run_id: int) -> pd.DataFrame:
             """SELECT model_name, COUNT(*) folds, AVG(accuracy) accuracy, AVG(log_loss) log_loss
                FROM validation_metrics WHERE model_run_id=? GROUP BY model_name""",
             conn, params=(run_id,))
+
+
+def render_news_cards(news: pd.DataFrame) -> None:
+    """Render linked, human-readable article cards instead of a raw SQL table."""
+    for _, article in news.iterrows():
+        headline = str(article.get("headline") or "Untitled article").strip()
+        source = str(article.get("source_name") or article.get("source_type") or "Unknown source").strip()
+        published = str(article.get("published_at") or "")
+        body = str(article.get("body") or "").strip()
+        url = str(article.get("url") or "").strip()
+        sentiment = str(article.get("sentiment") or "not scored").strip()
+        try:
+            stamp = pd.to_datetime(published, utc=True).strftime("%b %d, %Y · %H:%M UTC")
+        except (TypeError, ValueError):
+            stamp = published
+        st.markdown(f"### {headline}")
+        st.caption(f"{source} · {stamp} · Sentiment: {sentiment}")
+        if body and body.lower() != "none":
+            summary = body if len(body) <= 420 else body[:417].rsplit(" ", 1)[0] + "…"
+            st.write(summary)
+        if url and url.lower() != "none":
+            st.link_button("Read full article", url, use_container_width=False)
+        else:
+            st.caption("Source link unavailable")
+        st.divider()
 
 
 def latest_prediction(db_path: str, asset_id: int, interval: str) -> dict:
@@ -350,10 +375,12 @@ def main() -> None:
 
     with news_tab:
         news = load_news(db_path, asset_id)
+        st.subheader(f"Latest news for {symbol}")
+        st.caption("Headlines are fetched from the configured provider and linked to this asset by the provider’s symbols or article text.")
         if news.empty:
-            st.info("No news linked to this asset yet.")
+            st.info("No news linked to this asset yet. Use Fetch latest news in the sidebar.")
         else:
-            st.dataframe(news, width="stretch", hide_index=True)
+            render_news_cards(news)
 
     with social_tab:
         social = load_social(db_path, asset_id)
