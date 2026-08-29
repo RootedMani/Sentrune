@@ -21,6 +21,7 @@ import pandas as pd
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
+from trading_assistant.features.compute import run as run_features
 from trading_assistant.ingest.pipeline import run as run_ingestion
 
 # app.py sits at src/trading_assistant/dashboard/ -> project root is 3 levels up.
@@ -183,7 +184,7 @@ def latest_prediction(db_path: str, asset_id: int, interval: str) -> dict:
             return {"error": "no trained model yet - run: python run_pipeline.py train"}
         technical = conn.execute("SELECT * FROM technical_features WHERE asset_id=? AND interval=? ORDER BY timestamp DESC LIMIT 1", (asset_id, interval)).fetchone()
     if technical is None:
-        return {"error": "no technical features yet - run: python run_pipeline.py features"}
+        return {"error": "no technical features yet - automatic computation will run after the next data refresh"}
 
     path = Path(run["model_path"])
     if not path.is_absolute():
@@ -233,7 +234,7 @@ def hint_for(counts: dict[str, int], has_ingest_log: bool) -> list[str]:
     if counts.get("social_items", 0) == 0:
         hints.append("No market discussion yet - use Refresh news and prices now; Google News RSS needs no key. Reddit requires approved API access.")
     if counts.get("price_bars", 0) > 0 and counts.get("technical_features", 0) == 0:
-        hints.append("Prices exist but no technical features - run: python run_pipeline.py features")
+        hints.append("Prices exist but no technical features - automatic computation will run after the next data refresh")
     if counts.get("model_runs", 0) == 0:
         hints.append("No trained models yet - run: python run_pipeline.py train")
     return hints
@@ -265,8 +266,11 @@ def main() -> None:
             # needs a write connection. Point the existing pipeline at the
             # same database selected in the sidebar, then refresh cached views.
             os.environ["DB_PATH"] = db_path
-            with st.spinner("Fetching news and updating the database..."):
+            with st.spinner("Fetching prices, news, and market discussion..."):
                 totals = run_ingestion()
+            with st.spinner("Computing technical indicators and sentiment..."):
+                feature_totals = run_features()
+            totals.update({f"features_{key}": value for key, value in feature_totals.items()})
             st.session_state["last_auto_ingest"] = time.time()
             for cached_loader in (load_assets, load_prices, load_technical, load_aggregates, load_news, load_social, load_ingestion_log, load_model_runs, load_validation_summary):
                 cached_loader.clear()
@@ -285,8 +289,10 @@ def main() -> None:
     if time.time() - last_auto_ingest >= refresh_minutes * 60:
         try:
             os.environ["DB_PATH"] = db_path
-            with st.spinner("Updating prices and news..."):
+            with st.spinner("Updating prices, news, and market discussion..."):
                 run_ingestion()
+            with st.spinner("Computing technical indicators and sentiment..."):
+                run_features()
             st.session_state["last_auto_ingest"] = time.time()
             for cached_loader in (load_assets, load_prices, load_technical, load_aggregates, load_news, load_social, load_ingestion_log, load_model_runs, load_validation_summary):
                 cached_loader.clear()
@@ -359,7 +365,7 @@ def main() -> None:
     technical = load_technical(db_path, asset_id, interval) if table_exists(db_path, "technical_features") else pd.DataFrame()
     with technical_tab:
         if technical.empty:
-            st.info("No technical features yet - run: python run_pipeline.py features")
+            st.info("No technical features yet - automatic computation will run after the next data refresh")
         else:
             frame = technical.copy()
             frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)

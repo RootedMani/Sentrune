@@ -84,6 +84,11 @@ def run(assets_path="config/assets.yaml", sources_path="config/sources.yaml", en
     if result is not None:
         totals["google_news"] = result
         state.mark_success(conn, "google_news", "all")
+    rss_news_last = _dt(state.get_last_success(conn, "google_news_news", "all"))
+    result = _run_logged(conn, "google_news_news", lambda: insert_news(conn, market_rss.fetch_news(settings.assets, rss_news_last)))
+    if result is not None:
+        totals["google_news_news"] = result
+        state.mark_success(conn, "google_news_news", "all")
     result = _run_logged(conn, "reddit", lambda: insert_social(conn, reddit.fetch(settings.reddit_client_id, settings.reddit_client_secret, settings.reddit_user_agent, settings.subreddits, settings.usernames, delay_seconds=settings.reddit_delay_seconds, max_subreddits=settings.reddit_max_subreddits, max_usernames=settings.reddit_max_usernames)))
     if result is not None:
         totals["reddit"] = result

@@ -66,3 +66,39 @@ def fetch(assets: list[dict], start: datetime | None = None, limit: int = 20) ->
         except (requests.RequestException, ET.ParseError, ValueError, TypeError) as exc:
             log.warning("Google News RSS fetch failed for %s: %s", symbol, exc)
     return rows
+
+
+def fetch_news(assets: list[dict], start: datetime | None = None, limit: int = 20) -> list[dict]:
+    """Fetch the same public RSS results using the news-table contract."""
+    from ..normalize.news_items import normalize_news
+
+    rows: list[dict] = []
+    for asset in assets:
+        symbol = str(asset["symbol"]).upper()
+        name = str(asset.get("name") or symbol)
+        params = {"q": f'"{symbol}" {name} market', "hl": "en-US", "gl": "US", "ceid": "US:en"}
+        url = "https://news.google.com/rss/search?" + urlencode(params)
+        try:
+            response = requests.get(url, timeout=20, headers={"User-Agent": "Sentrune/0.1 market news reader"})
+            response.raise_for_status()
+            root = ET.fromstring(response.content)
+            for item in root.findall("./channel/item")[:limit]:
+                link = (item.findtext("link") or "").strip()
+                title = (item.findtext("title") or "").strip()
+                if not link or not title:
+                    continue
+                published = _published(item.findtext("pubDate"))
+                if start and published <= start.isoformat():
+                    continue
+                source = (item.findtext("source") or "Google News").strip()
+                rows.append(normalize_news({
+                    "id": item.findtext("guid") or link,
+                    "title": title,
+                    "description": (item.findtext("description") or "").strip(),
+                    "link": link,
+                    "published_at": published,
+                    "related": symbol,
+                }, "google_news", source))
+        except (requests.RequestException, ET.ParseError, ValueError, TypeError) as exc:
+            log.warning("Google News RSS news fetch failed for %s: %s", symbol, exc)
+    return rows

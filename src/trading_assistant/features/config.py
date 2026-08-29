@@ -26,7 +26,7 @@ def load_config(path: str = "config/features.yaml") -> FeatureSettings:
         # DB_PATH (used by run_pipeline.py) wins over the YAML so the three
         # layers always converge on one database regardless of CWD.
         db_path=os.getenv("DB_PATH") or raw.get("db_path", "data/trading_assistant.sqlite3"),
-        intervals=raw.get("intervals", ["1d"]),
+        intervals=[value.strip() for value in os.getenv("PRICE_INTERVALS", ",".join(raw.get("intervals", ["1d"]))).split(",") if value.strip()],
         assets=raw.get("assets", []),
         indicators=raw.get("indicators", ["sma", "ema", "macd", "rsi", "stoch", "bollinger", "atr", "obv", "volume_sma"]),
         sentiment_windows_hours=raw.get("sentiment_windows_hours", [24]),
