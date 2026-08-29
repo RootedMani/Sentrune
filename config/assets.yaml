@@ -1,0 +1,19 @@
+assets:
+  - symbol: AAPL
+    name: Apple Inc.
+    asset_type: stock
+    exchange: NASDAQ
+  - symbol: MSFT
+    name: Microsoft Corporation
+    asset_type: stock
+    exchange: NASDAQ
+  - symbol: BTC
+    name: Bitcoin
+    asset_type: crypto
+    exchange: Binance
+    pair: BTCUSDT
+  - symbol: ETH
+    name: Ethereum
+    asset_type: crypto
+    exchange: Binance
+    pair: ETHUSDT

@@ -1,0 +1,9 @@
+reddit:
+  # Names may be written with or without r/ and u/ prefixes.
+  subreddits:
+    - wallstreetbets
+    - CryptoCurrency
+  usernames:
+    - unusual_whales
+    - DeItaone
+    - sassal0x

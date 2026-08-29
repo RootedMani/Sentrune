@@ -1,0 +1,14 @@
+# Relative to the modeling working directory.
+db_path: data/trading_assistant.sqlite3
+model_dir: models
+interval: 1d
+# Optional ticker allow-list; null trains every active asset.
+assets: null
+# Forward return uses close[t+horizon_bars] / close[t] - 1.
+horizon_bars: 5
+dead_zone: 0.005
+folds: 3
+min_train_size: 50
+test_size: 20
+# Empty means the feature columns listed by the package default.
+feature_columns: null
