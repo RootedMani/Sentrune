@@ -19,6 +19,8 @@ import joblib
 import pandas as pd
 import streamlit as st
 
+from trading_assistant.ingest.pipeline import run as run_ingestion
+
 # app.py sits at src/trading_assistant/dashboard/ -> project root is 3 levels up.
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_DB = Path(os.getenv("DB_PATH", str(ROOT / "data" / "trading_assistant.sqlite3")))
@@ -200,7 +202,7 @@ def hint_for(counts: dict[str, int], has_ingest_log: bool) -> list[str]:
     if counts.get("price_bars", 0) == 0:
         hints.append("No price bars - check connectivity (yfinance / Binance) and config/assets.yaml")
     if counts.get("news_items", 0) == 0:
-        hints.append("No news items - free keys go in .env at the project root (FINNHUB_API_KEY or ALPHA_VANTAGE_API_KEY, CRYPTOPANIC_API_KEY)")
+        hints.append("No news items - add FINNHUB_API_KEY or ALPHA_VANTAGE_API_KEY in Render, then click Fetch latest news.")
     if counts.get("social_items", 0) == 0:
         hints.append("No social items - Reddit script keys go in .env at the project root (REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET)")
     if counts.get("price_bars", 0) > 0 and counts.get("technical_features", 0) == 0:
@@ -215,6 +217,32 @@ def main() -> None:
     st.caption("Sentrune prototype - probabilistic, explainable market intelligence. Read-only view over the pipeline database.")
 
     db_path = st.sidebar.text_input("Database", str(DEFAULT_DB))
+    st.sidebar.divider()
+    st.sidebar.subheader("News ingestion")
+    configured_providers = [
+        name for name, env_name in (
+            ("Finnhub", "FINNHUB_API_KEY"),
+            ("Alpha Vantage", "ALPHA_VANTAGE_API_KEY"),
+        ) if os.getenv(env_name)
+    ]
+    if configured_providers:
+        st.sidebar.caption("Configured: " + ", ".join(configured_providers))
+    else:
+        st.sidebar.caption("Add FINNHUB_API_KEY or ALPHA_VANTAGE_API_KEY in Render.")
+    if st.sidebar.button("Fetch latest news", type="primary", use_container_width=True):
+        try:
+            # The dashboard normally opens SQLite read-only, while ingestion
+            # needs a write connection. Point the existing pipeline at the
+            # same database selected in the sidebar, then refresh cached views.
+            os.environ["DB_PATH"] = db_path
+            with st.spinner("Fetching news and updating the database..."):
+                totals = run_ingestion()
+            load_news.clear()
+            load_ingestion_log.clear()
+            st.sidebar.success("Ingestion complete: " + (", ".join(f"{k}={v}" for k, v in totals.items()) or "no records fetched"))
+            st.rerun()
+        except Exception as exc:
+            st.sidebar.error(f"News ingestion failed: {exc}")
     if not Path(db_path).exists():
         st.warning(f"No database at {db_path}. Run: python run_pipeline.py all")
         st.stop()

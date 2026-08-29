@@ -68,6 +68,8 @@ The Render Web Service start command is:
 streamlit run src/trading_assistant/dashboard/app.py --server.port $PORT --server.address 0.0.0.0
 ```
 
+After adding `FINNHUB_API_KEY` or `ALPHA_VANTAGE_API_KEY` under Render Environment Variables, use the **Fetch latest news** button in the dashboard sidebar. The button runs the existing ingestion layer, stores the returned headlines, and refreshes the News tab. Adding a key alone does not fetch data because the web service does not run ingestion continuously. CryptoPanic is optional and is not required for stock news.
+
 ## What the dashboard shows
 
 - **Overview** - row counts per table, ingestion log with per-source status, next-step hints
