@@ -46,13 +46,14 @@ def run(assets_path="config/assets.yaml", sources_path="config/sources.yaml", en
         db_asset = asset_rows.get(key)
         if not db_asset:
             continue
-        source = "prices:" + key
-        last = _dt(state.get_last_success(conn, source, key))
         fetcher = stocks.fetch if asset["asset_type"] == "stock" else crypto.fetch
-        result = _run_logged(conn, source, lambda a=asset, d=db_asset, l=last, f=fetcher: insert_price_bars(conn, f(a, d["id"], settings.interval, l)))
-        if result is not None:
-            totals[source] = result
-            state.mark_success(conn, source, key)
+        for interval in settings.intervals:
+            source = "prices:" + key + ":" + interval
+            last = _dt(state.get_last_success(conn, source, key))
+            result = _run_logged(conn, source, lambda a=asset, d=db_asset, l=last, f=fetcher, i=interval: insert_price_bars(conn, f(a, d["id"], i, l)))
+            if result is not None:
+                totals[source] = result
+                state.mark_success(conn, source, key)
     stock_assets = [a for a in settings.assets if a["asset_type"] == "stock"]
     if settings.finnhub_api_key:
         for asset in stock_assets:

@@ -13,11 +13,13 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import time
 from pathlib import Path
 
 import joblib
 import pandas as pd
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 
 from trading_assistant.ingest.pipeline import run as run_ingestion
 
@@ -242,6 +244,9 @@ def main() -> None:
     st.caption("Sentrune prototype - probabilistic, explainable market intelligence. Read-only view over the pipeline database.")
 
     db_path = st.sidebar.text_input("Database", str(DEFAULT_DB))
+    refresh_minutes = max(1, int(os.getenv("AUTO_REFRESH_MINUTES", "15")))
+    st_autorefresh(interval=refresh_minutes * 60 * 1000, key="sentrune_auto_refresh")
+    st.sidebar.caption(f"Auto-refreshing every {refresh_minutes} minutes")
     st.sidebar.divider()
     st.sidebar.subheader("News ingestion")
     configured_providers = [
@@ -254,7 +259,7 @@ def main() -> None:
         st.sidebar.caption("Configured: " + ", ".join(configured_providers))
     else:
         st.sidebar.caption("Add FINNHUB_API_KEY or ALPHA_VANTAGE_API_KEY in Render.")
-    if st.sidebar.button("Fetch latest news", type="primary", use_container_width=True):
+    if st.sidebar.button("Refresh news and prices now", type="primary", use_container_width=True):
         try:
             # The dashboard normally opens SQLite read-only, while ingestion
             # needs a write connection. Point the existing pipeline at the
@@ -262,15 +267,31 @@ def main() -> None:
             os.environ["DB_PATH"] = db_path
             with st.spinner("Fetching news and updating the database..."):
                 totals = run_ingestion()
-            load_news.clear()
-            load_ingestion_log.clear()
+            st.session_state["last_auto_ingest"] = time.time()
+            for cached_loader in (load_assets, load_prices, load_technical, load_aggregates, load_news, load_social, load_ingestion_log, load_model_runs, load_validation_summary):
+                cached_loader.clear()
             st.sidebar.success("Ingestion complete: " + (", ".join(f"{k}={v}" for k, v in totals.items()) or "no records fetched"))
             st.rerun()
         except Exception as exc:
-            st.sidebar.error(f"News ingestion failed: {exc}")
+            st.sidebar.error(f"Data refresh failed: {exc}")
     if not Path(db_path).exists():
         st.warning(f"No database at {db_path}. Run: python run_pipeline.py all")
         st.stop()
+
+    # Streamlit reruns the script when the auto-refresh timer fires. Keep the
+    # last ingestion time in session state so a selector change does not call
+    # external APIs repeatedly, while the open dashboard stays current.
+    last_auto_ingest = float(st.session_state.get("last_auto_ingest", 0.0))
+    if time.time() - last_auto_ingest >= refresh_minutes * 60:
+        try:
+            os.environ["DB_PATH"] = db_path
+            with st.spinner("Updating prices and news..."):
+                run_ingestion()
+            st.session_state["last_auto_ingest"] = time.time()
+            for cached_loader in (load_assets, load_prices, load_technical, load_aggregates, load_news, load_social, load_ingestion_log, load_model_runs, load_validation_summary):
+                cached_loader.clear()
+        except Exception as exc:
+            st.warning(f"Automatic data refresh failed: {exc}")
 
     try:
         assets = load_assets(db_path)
@@ -281,13 +302,16 @@ def main() -> None:
         st.warning("Assets table is empty - run: python run_pipeline.py ingest")
         st.stop()
 
-    symbol = st.sidebar.selectbox("Asset", assets["symbol"].tolist(), index=0)
+    symbols = assets["symbol"].tolist()
+    symbol = st.sidebar.selectbox("Asset", symbols, index=0, key="selected_asset")
     asset = assets[assets.symbol == symbol].iloc[0]
     asset_id = int(asset["id"])
 
     with connect(db_path) as conn:
-        intervals = [r[0] for r in conn.execute("SELECT DISTINCT interval FROM price_bars WHERE asset_id=? ORDER BY interval", (asset_id,))]
-    interval = st.sidebar.selectbox("Interval", intervals or ["1d"], index=0)
+        stored_intervals = [r[0] for r in conn.execute("SELECT DISTINCT interval FROM price_bars WHERE asset_id=? ORDER BY interval", (asset_id,))]
+    configured_intervals = [value.strip() for value in os.getenv("PRICE_INTERVALS", "1d").split(",") if value.strip()]
+    intervals = list(dict.fromkeys(configured_intervals + stored_intervals)) or ["1d"]
+    interval = st.sidebar.selectbox("Interval", intervals, index=0, key="selected_interval")
 
     overview_tab, prices_tab, technical_tab, sentiment_tab, news_tab, social_tab, model_tab = st.tabs(
         ["Overview", "Prices", "Technicals", "Sentiment", "News", "Social", "Model"])
@@ -308,10 +332,11 @@ def main() -> None:
         cols[2].metric("Social items", counts["social_items"] if counts["social_items"] is not None else "n/a")
         cols[3].metric("Trained models", counts["model_runs"] if counts["model_runs"] is not None else "n/a")
         st.dataframe(assets[assets.symbol == symbol], width="stretch", hide_index=True)
-        st.subheader("Ingestion log (latest first)")
-        st.dataframe(log_rows, width="stretch", hide_index=True)
-        for message in hint_for(counts, has_ingest_log=not log_rows.empty):
-            st.info(message)
+        with st.expander("Diagnostics", expanded=False):
+            st.caption("Operational details are kept here so the dashboard remains focused on market data.")
+            st.dataframe(log_rows, width="stretch", hide_index=True)
+            for message in hint_for(counts, has_ingest_log=not log_rows.empty):
+                st.info(message)
 
     prices = load_prices(db_path, asset_id, interval)
     with prices_tab:
@@ -378,7 +403,7 @@ def main() -> None:
         st.subheader(f"Latest news for {symbol}")
         st.caption("Headlines are fetched from the configured provider and linked to this asset by the provider’s symbols or article text.")
         if news.empty:
-            st.info("No news linked to this asset yet. Use Fetch latest news in the sidebar.")
+            st.info("No news linked to this asset yet. Use Refresh news and prices now in the sidebar.")
         else:
             render_news_cards(news)
 

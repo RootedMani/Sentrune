@@ -16,6 +16,7 @@ class Settings:
     usernames: list[str] = field(default_factory=list)
     db_path: str = "data/trading_assistant.sqlite3"
     interval: str = "1d"
+    intervals: list[str] = field(default_factory=lambda: ["1d"])
     finnhub_api_key: str | None = None
     alpha_vantage_api_key: str | None = None
     cryptopanic_api_key: str | None = None
@@ -42,6 +43,7 @@ def load_settings(assets_path: str = "config/assets.yaml", sources_path: str = "
         usernames=sources_cfg.get("reddit", {}).get("usernames", []),
         db_path=os.getenv("DB_PATH", "data/trading_assistant.sqlite3"),
         interval=os.getenv("PRICE_INTERVAL", "1d"),
+        intervals=[value.strip() for value in os.getenv("PRICE_INTERVALS", os.getenv("PRICE_INTERVAL", "1d")).split(",") if value.strip()],
         finnhub_api_key=os.getenv("FINNHUB_API_KEY"),
         alpha_vantage_api_key=os.getenv("ALPHA_VANTAGE_API_KEY"),
         cryptopanic_api_key=os.getenv("CRYPTOPANIC_API_KEY"),

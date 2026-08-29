@@ -68,11 +68,11 @@ The Render Web Service start command is:
 streamlit run src/trading_assistant/dashboard/app.py --server.port $PORT --server.address 0.0.0.0
 ```
 
-After adding `FINNHUB_API_KEY` or `ALPHA_VANTAGE_API_KEY` under Render Environment Variables, use the **Fetch latest news** button in the dashboard sidebar. The button runs the existing ingestion layer, stores the returned headlines, and refreshes the News tab. Adding a key alone does not fetch data because the web service does not run ingestion continuously. CryptoPanic is optional and is not required for stock news.
+After adding `FINNHUB_API_KEY` or `ALPHA_VANTAGE_API_KEY` under Render Environment Variables, the dashboard automatically refreshes prices and news when it is open. The **Refresh news and prices now** button is also available for an immediate update. The selected asset and interval update the panels immediately. Set `AUTO_REFRESH_MINUTES` to change the cadence and `PRICE_INTERVALS` to a comma-separated list such as `1d,1h,1wk`; the configured intervals are fetched for every asset. CryptoPanic is optional and is not required for stock news. Background updates while nobody is viewing the page require a separate scheduled service and durable shared storage.
 
 ## What the dashboard shows
 
-- **Overview** - row counts per table, ingestion log with per-source status, next-step hints
+- **Overview** - current row counts and the selected asset; operational diagnostics are tucked into an optional expander
 - **Prices** - close and volume from real ingested bars
 - **Technicals** - moving averages, RSI(14), MACD computed by the feature layer
 - **Sentiment** - rolling aggregates split into followed vs unattributed accounts
