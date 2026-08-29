@@ -68,7 +68,7 @@ The Render Web Service start command is:
 streamlit run src/trading_assistant/dashboard/app.py --server.port $PORT --server.address 0.0.0.0
 ```
 
-After adding `FINNHUB_API_KEY` or `ALPHA_VANTAGE_API_KEY` under Render Environment Variables, the dashboard automatically refreshes prices and news when it is open. The **Refresh news and prices now** button is also available for an immediate update. The selected asset and interval update the panels immediately. Set `AUTO_REFRESH_MINUTES` to change the cadence and `PRICE_INTERVALS` to a comma-separated list such as `1d,1h,1wk`; the configured intervals are fetched for every asset. CryptoPanic is optional and is not required for stock news. Background updates while nobody is viewing the page require a separate scheduled service and durable shared storage.
+After adding `FINNHUB_API_KEY` or `ALPHA_VANTAGE_API_KEY` under Render Environment Variables, the dashboard automatically refreshes prices and news when it is open. The Market Discussion panel also fetches public Google News RSS results and does not require another key. The **Refresh news and prices now** button is also available for an immediate update. The selected asset and interval update the panels immediately. Set `AUTO_REFRESH_MINUTES` to change the cadence and `PRICE_INTERVALS` to a comma-separated list such as `1d,1h,1wk`; the configured intervals are fetched for every asset. CryptoPanic is optional and is not required for stock news. Background updates while nobody is viewing the page require a separate scheduled service and durable shared storage.
 
 ## What the dashboard shows
 
@@ -76,7 +76,8 @@ After adding `FINNHUB_API_KEY` or `ALPHA_VANTAGE_API_KEY` under Render Environme
 - **Prices** - close and volume from real ingested bars
 - **Technicals** - moving averages, RSI(14), MACD computed by the feature layer
 - **Sentiment** - rolling aggregates split into followed vs unattributed accounts
-- **News / Social** - latest linked items with FinBERT labels
+- **News** - latest linked provider articles with summaries, timestamps, source attribution, and links
+- **Market Discussion** - no-key Google News RSS coverage for configured assets; Reddit remains optional and requires approved API access
 - **Model** - latest down/flat/up prediction with the exact as-of timestamp, plus
   walk-forward accuracy and log loss against buy-and-hold and MA-crossover baselines
 

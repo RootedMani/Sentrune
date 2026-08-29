@@ -231,7 +231,7 @@ def hint_for(counts: dict[str, int], has_ingest_log: bool) -> list[str]:
     if counts.get("news_items", 0) == 0:
         hints.append("No news items - add FINNHUB_API_KEY or ALPHA_VANTAGE_API_KEY in Render, then click Fetch latest news.")
     if counts.get("social_items", 0) == 0:
-        hints.append("No social items - Reddit script keys go in .env at the project root (REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET)")
+        hints.append("No market discussion yet - use Refresh news and prices now; Google News RSS needs no key. Reddit requires approved API access.")
     if counts.get("price_bars", 0) > 0 and counts.get("technical_features", 0) == 0:
         hints.append("Prices exist but no technical features - run: python run_pipeline.py features")
     if counts.get("model_runs", 0) == 0:
@@ -314,7 +314,7 @@ def main() -> None:
     interval = st.sidebar.selectbox("Interval", intervals, index=0, key="selected_interval")
 
     overview_tab, prices_tab, technical_tab, sentiment_tab, news_tab, social_tab, model_tab = st.tabs(
-        ["Overview", "Prices", "Technicals", "Sentiment", "News", "Social", "Model"])
+        ["Overview", "Prices", "Technicals", "Sentiment", "News", "Market Discussion", "Model"])
 
     counts = {}
     with connect(db_path) as conn:
@@ -408,11 +408,22 @@ def main() -> None:
             render_news_cards(news)
 
     with social_tab:
-        social = load_social(db_path, asset_id)
-        if social.empty:
-            st.info("No social posts linked to this asset yet.")
+        discussion = load_social(db_path, asset_id)
+        st.subheader(f"Market discussion for {symbol}")
+        st.caption("Google News RSS is the no-key discussion feed. Reddit remains optional and requires approved API access.")
+        if discussion.empty:
+            st.info("No market discussion linked to this asset yet. Use Refresh news and prices now in the sidebar.")
         else:
-            st.dataframe(social, width="stretch", hide_index=True)
+            for _, item in discussion.iterrows():
+                title = str(item.get("title") or "Untitled discussion").strip()
+                source = str(item.get("author_username") or item.get("platform") or "Unknown source").strip()
+                created = str(item.get("created_at") or "")
+                url = str(item.get("url") or "").strip()
+                st.markdown(f"### {title}")
+                st.caption(f"{source} · {created}")
+                if url and url.lower() != "none":
+                    st.link_button("Open discussion", url, use_container_width=False)
+                st.divider()
 
     with model_tab:
         runs = load_model_runs(db_path, asset_id)

@@ -8,7 +8,7 @@ from pathlib import Path
 from . import state
 from .config import load_settings
 from .db.connection import connect, initialize, insert_news, insert_price_bars, insert_social, seed_assets, seed_followed_sources, utc_now
-from .sources import crypto, news_crypto, news_stocks, reddit, stocks
+from .sources import crypto, market_rss, news_crypto, news_stocks, reddit, stocks
 
 log = logging.getLogger(__name__)
 
@@ -79,6 +79,11 @@ def run(assets_path="config/assets.yaml", sources_path="config/sources.yaml", en
     if result is not None:
         totals["cryptopanic"] = result
         state.mark_success(conn, "cryptopanic", "all")
+    rss_last = _dt(state.get_last_success(conn, "google_news", "all"))
+    result = _run_logged(conn, "google_news", lambda: insert_social(conn, market_rss.fetch(settings.assets, rss_last)))
+    if result is not None:
+        totals["google_news"] = result
+        state.mark_success(conn, "google_news", "all")
     result = _run_logged(conn, "reddit", lambda: insert_social(conn, reddit.fetch(settings.reddit_client_id, settings.reddit_client_secret, settings.reddit_user_agent, settings.subreddits, settings.usernames, delay_seconds=settings.reddit_delay_seconds, max_subreddits=settings.reddit_max_subreddits, max_usernames=settings.reddit_max_usernames)))
     if result is not None:
         totals["reddit"] = result
