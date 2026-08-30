@@ -55,6 +55,7 @@ def compute_technical(conn: sqlite3.Connection, settings) -> int:
             frame = pd.DataFrame([dict(r) for r in rows])
             # Providers can overlap at the boundary between incremental
             # requests. Keep the newest copy before pandas-ta sees the index.
+            frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)
             frame = frame.drop_duplicates(subset=["timestamp"], keep="last").sort_values("timestamp").set_index("timestamp")
             result = compute_indicators(frame, settings.indicators)
             result = compute_lag_momentum(result, horizons=settings.lag_horizons, zscore_window=settings.zscore_window)

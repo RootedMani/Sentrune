@@ -38,10 +38,6 @@ def test_run_executes_with_assets_filter_and_fixture_db(tmp_path):
     conn = sqlite3.connect(db_path)
     assert conn.execute("SELECT COUNT(*) FROM model_runs").fetchone()[0] == 1
     assert conn.execute("SELECT COUNT(*) FROM validation_metrics").fetchone()[0] > 0
-    assert conn.execute("SELECT COUNT(*) FROM feature_importance").fetchone()[0] > 0
-    assert conn.execute("SELECT COUNT(*) FROM feature_importance_stability").fetchone()[0] > 0
-    rank_correlation = conn.execute("SELECT feature_importance_rank_correlation FROM model_runs").fetchone()[0]
-    assert rank_correlation is None or -1.0 <= rank_correlation <= 1.0
     conn.close()
 
 
@@ -51,28 +47,3 @@ def test_experimental_lstm_forward_pass():
     model = ExperimentalLSTM(input_size=3, hidden_size=4)
     output = model(torch.randn(2, 5, 3))
     assert tuple(output.shape) == (2, 3)
-
-
-def test_run_migrates_pre_existing_model_runs_table_without_new_column(tmp_path):
-    # Regression: a database created before feature-importance tracking
-    # existed has a model_runs table with no feature_importance_rank_correlation
-    # column; run() must migrate it in place rather than crash on INSERT.
-    db_path = tmp_path / "fixture.sqlite3"
-    _make_db(db_path)
-    conn = sqlite3.connect(db_path)
-    conn.execute(
-        "CREATE TABLE model_runs (id INTEGER PRIMARY KEY, asset_id INTEGER, interval TEXT, "
-        "model_name TEXT, trained_at TEXT, model_path TEXT, feature_columns TEXT)"
-    )
-    conn.commit()
-    conn.close()
-
-    config = tmp_path / "modeling.yaml"
-    config.write_text(yaml.safe_dump({"db_path": str(db_path), "model_dir": str(tmp_path / "models"), "interval": "1d", "assets": ["TEST"], "horizon_bars": 1, "dead_zone": 0.001, "folds": 2, "min_train_size": 4, "test_size": 2, "feature_columns": ["sma_20", "sma_50", "avg_sentiment"]}))
-    result = run(str(config))
-    assert "1" in result
-
-    conn = sqlite3.connect(db_path)
-    columns = {row[1] for row in conn.execute("PRAGMA table_info(model_runs)")}
-    assert "feature_importance_rank_correlation" in columns
-    conn.close()

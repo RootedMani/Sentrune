@@ -11,6 +11,7 @@ pretending data exists.
 """
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import sqlite3
@@ -20,6 +21,8 @@ from pathlib import Path
 import joblib
 import pandas as pd
 import streamlit as st
+
+log = logging.getLogger(__name__)
 
 from trading_assistant.features.compute import run as run_features
 from trading_assistant.ingest.pipeline import run as run_ingestion
@@ -325,8 +328,12 @@ def main() -> None:
             totals = _do_refresh(db_path)
             st.sidebar.success("Refreshed: " + (", ".join(f"{k}={v}" for k, v in totals.items()) or "no new records"))
             st.rerun()
-        except Exception:
-            st.sidebar.error("Refresh failed - the market data source may be temporarily unavailable. Try again shortly.")
+        except Exception as exc:
+            # Log the full traceback so the real cause is visible in the
+            # server/console logs, and show a short, specific message in the
+            # UI instead of a generic "try again" that hides what broke.
+            log.exception("Manual refresh failed")
+            st.sidebar.error(f"Refresh failed: {type(exc).__name__}: {exc}")
 
     if not Path(db_path).exists():
         st.warning(f"No database at {db_path}. Run: python run_pipeline.py all")
@@ -343,8 +350,12 @@ def main() -> None:
     if time.time() - last_refresh_at >= STALE_AFTER_SECONDS:
         try:
             _do_refresh(db_path)
-        except Exception:
-            st.warning("Couldn't reach the market data source on load - showing the last saved data. Use Refresh in the sidebar to try again.")
+        except Exception as exc:
+            log.exception("Auto-refresh on load failed")
+            st.warning(
+                "Auto-refresh failed and the last saved data is shown instead "
+                f"({type(exc).__name__}: {exc}). Use Refresh in the sidebar to try again."
+            )
 
     try:
         assets = load_assets(db_path)

@@ -6,7 +6,7 @@
 > trading_assistant.modeling` or `python run_pipeline.py train`). The setup snippets
 > below predate the restructure; the root README quickstart is authoritative.
 
-This package is the additive modeling layer for Sentrune. It reads the upstream SQLite tables and writes only new `model_runs`, `validation_metrics`, `feature_importance`, and `feature_importance_stability` tables. It never modifies `price_bars`, `technical_features`, `sentiment_aggregates`, or other upstream tables.
+This package is the additive modeling layer for Sentrune. It reads the upstream SQLite tables and writes only new `model_runs` and `validation_metrics` tables. It never modifies `price_bars`, `technical_features`, `sentiment_aggregates`, or other upstream tables.
 
 ## Label formula
 
@@ -34,13 +34,7 @@ The optional `ExperimentalLSTM` module is isolated under `modeling/models/experi
 
 Validation uses expanding training windows followed by strictly later test windows; random train/test splits are not used. Because labels are forward returns over `horizon_bars` bars, the last `horizon_bars` training rows of each fold would otherwise be labeled from prices inside the test window; the splitter purges those rows (an embargo gap equal to the horizon) so no training label sees the test period. Each fold stores accuracy, multiclass log loss, and per-class precision and recall in `validation_metrics`. Versioned LightGBM artifacts are stored below `model_dir/<asset_id>/`. After fold evaluation, the persisted LightGBM artifact is refit on all usable rows so the saved predictor includes the latest available training data. The `Predictor.predict(artifact_path, features)` method returns the simple probability interface needed by future reporting and alerting layers.
 
-## Feature-importance stability
-
-A single walk-forward fold's LightGBM gain importances can look convincing purely by chance on a small dataset. `modeling/validation/importance.py` adds a model-agnostic check on top of that: for the LightGBM model only, each fold's *held-out* test rows are scored with **permutation importance** — shuffle one feature column, re-score with the already-fitted model, and measure how much log-loss degrades versus the unpermuted baseline. This is scored on the test fold specifically (not training data) so it reflects out-of-sample reliance rather than in-sample overfitting, and it is hand-rolled rather than `sklearn.inspection.permutation_importance` because the project's model wrappers only implement `predict_proba`, not the full scikit-learn estimator API that helper expects.
-
-Per-fold permutation and gain importances are stored in `feature_importance` (one row per fold per feature). Across folds, `stability_report()` computes each feature's mean importance, std, coefficient of variation, and mean rank, stored in `feature_importance_stability` (one row per feature per model run) — this is what answers "is this feature reliably useful, or did it just get lucky on one fold?" `mean_pairwise_rank_correlation()` reduces that to a single number per model run (stored on `model_runs.feature_importance_rank_correlation`): the average Spearman rank correlation between every pair of folds' importance rankings, where 1.0 means the same features are ranked important every fold and values near 0 mean the ranking reshuffles fold to fold.
-
-The primary model also exposes LightGBM's native gain-based `feature_importances()`, stored alongside the permutation values for comparison. SHAP can be added by a later layer without changing the persisted model interface.
+The primary model exposes LightGBM feature importances through `feature_importances()`, which is the documented low-cost explainability fallback for prototype compute. SHAP can be added by a later layer without changing the persisted model interface.
 
 ## Setup and execution
 

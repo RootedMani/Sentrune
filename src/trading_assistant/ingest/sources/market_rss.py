@@ -38,13 +38,25 @@ def fetch(assets: list[dict], start: datetime | None = None, limit: int = 20) ->
             response = requests.get(url, timeout=20, headers={"User-Agent": "Sentrune/0.1 market discussion reader"})
             response.raise_for_status()
             root = ET.fromstring(response.content)
-            for item in root.findall("./channel/item")[:limit]:
+            items = root.findall("./channel/item")
+            if not items:
+                # A 200 with zero <item> elements almost always means Google
+                # served a block/consent page instead of the feed rather than
+                # a genuine "no news" result - log a snippet so this is
+                # diagnosable instead of silently looking like "no new items".
+                log.warning(
+                    "Google News RSS returned 0 items for %s (status=%s, body starts: %r)",
+                    symbol, response.status_code, response.text[:200],
+                )
+            skipped_stale = 0
+            for item in items[:limit]:
                 link = (item.findtext("link") or "").strip()
                 title = (item.findtext("title") or "").strip()
                 if not link or not title:
                     continue
                 created_at = _published(item.findtext("pubDate"))
                 if start and created_at <= start.isoformat():
+                    skipped_stale += 1
                     continue
                 source = (item.findtext("source") or "Google News").strip()
                 description = (item.findtext("description") or "").strip()
@@ -63,6 +75,8 @@ def fetch(assets: list[dict], start: datetime | None = None, limit: int = 20) ->
                     "related_symbols": [symbol],
                     "raw_payload": {"asset": symbol, "source": source, "title": title, "link": link},
                 })
+            if items and skipped_stale == len(items):
+                log.info("Google News RSS for %s: all %d items already seen (older than last run)", symbol, len(items))
         except (requests.RequestException, ET.ParseError, ValueError, TypeError) as exc:
             log.warning("Google News RSS fetch failed for %s: %s", symbol, exc)
     return rows
