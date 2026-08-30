@@ -2,9 +2,23 @@ services:
   - type: web
     name: sentrune-dashboard
     runtime: python
-    plan: free
+    # NOTE: Render's free plan has no persistent disk and the filesystem is
+    # wiped on every restart/redeploy/idle-spindown. That reset is why prices
+    # kept freezing at the checked-in demo database's date (2026-08-28): the
+    # auto-refresh in dashboard/app.py was doing real work, but every restart
+    # threw the results away and reloaded the git-committed snapshot. Disks
+    # require a paid plan - upgrade `plan` below to use one.
+    plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: streamlit run src/trading_assistant/dashboard/app.py --server.port $PORT --server.address 0.0.0.0
+    disk:
+      name: sentrune-data
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.13.5
+      - key: DB_PATH
+        value: /var/data/trading_assistant.sqlite3
+      - key: SENTRUNE_MODEL_DIR
+        value: /var/data/models

@@ -12,6 +12,7 @@ pretending data exists.
 from __future__ import annotations
 
 import os
+import shutil
 import sqlite3
 import time
 from pathlib import Path
@@ -19,7 +20,6 @@ from pathlib import Path
 import joblib
 import pandas as pd
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
 
 from trading_assistant.features.compute import run as run_features
 from trading_assistant.ingest.pipeline import run as run_ingestion
@@ -29,11 +29,29 @@ ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_DB = Path(os.getenv("DB_PATH", str(ROOT / "data" / "trading_assistant.sqlite3")))
 MODEL_ROOT = Path(os.getenv("SENTRUNE_MODEL_DIR", str(ROOT / "models")))
 
+
+def _seed_persistent_storage() -> None:
+    """First boot on a fresh Render disk (DB_PATH/SENTRUNE_MODEL_DIR pointed at
+    a mounted volume, e.g. /var/data): the volume starts empty, so copy the
+    checked-in demo database and models onto it once. On every later boot the
+    disk already has real data and this is a no-op, so live ingestion is
+    never overwritten by the demo snapshot."""
+    demo_db = ROOT / "data" / "trading_assistant.sqlite3"
+    if not DEFAULT_DB.exists() and demo_db.exists() and DEFAULT_DB.resolve() != demo_db.resolve():
+        DEFAULT_DB.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(demo_db, DEFAULT_DB)
+    demo_models = ROOT / "models"
+    if not MODEL_ROOT.exists() and demo_models.exists() and MODEL_ROOT.resolve() != demo_models.resolve():
+        shutil.copytree(demo_models, MODEL_ROOT)
+
+
+_seed_persistent_storage()
+
 LABELS = {0: "down", 1: "flat", 2: "up"}
 TECHNICAL_COLUMNS = ["sma_20", "sma_50", "sma_200", "ema_12", "ema_26", "macd", "macd_signal", "macd_histogram", "rsi_14", "stoch_k", "stoch_d", "bb_lower", "bb_middle", "bb_upper", "atr_14", "obv", "volume_sma_20"]
 SENTIMENT_COLUMNS = ["avg_sentiment", "mention_volume", "sentiment_volatility", "followed_avg_sentiment", "followed_mention_volume", "followed_sentiment_volatility", "unattributed_avg_sentiment", "unattributed_mention_volume", "unattributed_sentiment_volatility"]
 
-st.set_page_config(page_title="Sentrune", page_icon=None, layout="wide")
+st.set_page_config(page_title="Sentrune", page_icon="📈", layout="wide")
 
 
 def connect(db_path: str) -> sqlite3.Connection:
@@ -243,16 +261,52 @@ def hint_for(counts: dict[str, int], has_ingest_log: bool) -> list[str]:
     return hints
 
 
+ALL_CACHED_LOADERS = (
+    load_assets, load_prices, load_technical, load_aggregates, load_news,
+    load_social, load_ingestion_log, load_model_runs, load_validation_summary,
+)
+
+
+def _do_refresh(db_path: str) -> dict[str, int]:
+    """Run one ingest + features pass against db_path and drop cached reads
+    so the panels show the new rows immediately. Raises on failure - callers
+    decide how to surface that."""
+    # The dashboard normally opens SQLite read-only, while ingestion needs a
+    # write connection. Point the existing pipeline at the selected database.
+    os.environ["DB_PATH"] = db_path
+    with st.spinner("Fetching prices, news, and market discussion..."):
+        totals = run_ingestion()
+    with st.spinner("Computing technical indicators and sentiment..."):
+        feature_totals = run_features()
+    totals.update({f"features_{key}": value for key, value in feature_totals.items()})
+    st.session_state["last_refresh_at"] = time.time()
+    for cached_loader in ALL_CACHED_LOADERS:
+        cached_loader.clear()
+    return totals
+
+
+def _relative_time(epoch_seconds: float) -> str:
+    if not epoch_seconds:
+        return "never"
+    elapsed = max(0, int(time.time() - epoch_seconds))
+    if elapsed < 60:
+        return "just now"
+    if elapsed < 3600:
+        return f"{elapsed // 60} min ago"
+    if elapsed < 86400:
+        return f"{elapsed // 3600} hr ago"
+    return f"{elapsed // 86400} days ago"
+
+
 def main() -> None:
     st.title("Sentrune")
-    st.caption("Sentrune prototype - probabilistic, explainable market intelligence. Read-only view over the pipeline database.")
+    st.caption("Sentrune prototype - probabilistic, explainable market intelligence.")
 
-    db_path = st.sidebar.text_input("Database", str(DEFAULT_DB))
-    refresh_minutes = max(1, int(os.getenv("AUTO_REFRESH_MINUTES", "15")))
-    st_autorefresh(interval=refresh_minutes * 60 * 1000, key="sentrune_auto_refresh")
-    st.sidebar.caption(f"Auto-refreshing every {refresh_minutes} minutes")
-    st.sidebar.divider()
-    st.sidebar.subheader("News ingestion")
+    with st.sidebar.expander("Database location", expanded=False):
+        st.caption("Only change this if you're pointing the dashboard at a different file.")
+        db_path = st.text_input("Database path", str(DEFAULT_DB), label_visibility="collapsed")
+
+    st.sidebar.subheader("Data")
     configured_providers = [
         name for name, env_name in (
             ("Finnhub", "FINNHUB_API_KEY"),
@@ -260,47 +314,32 @@ def main() -> None:
         ) if os.getenv(env_name)
     ]
     if configured_providers:
-        st.sidebar.caption("Configured: " + ", ".join(configured_providers))
+        st.sidebar.caption("News source: " + ", ".join(configured_providers))
     else:
-        st.sidebar.caption("Add FINNHUB_API_KEY or ALPHA_VANTAGE_API_KEY in Render.")
-    if st.sidebar.button("Refresh news and prices now", type="primary", use_container_width=True):
+        st.sidebar.caption("Prices only - add a FINNHUB_API_KEY or ALPHA_VANTAGE_API_KEY to also pull news.")
+
+    last_refresh_at = float(st.session_state.get("last_refresh_at", 0.0))
+    st.sidebar.caption(f"Last updated: {_relative_time(last_refresh_at)}")
+    if st.sidebar.button("🔄 Refresh prices & news", type="primary", use_container_width=True):
         try:
-            # The dashboard normally opens SQLite read-only, while ingestion
-            # needs a write connection. Point the existing pipeline at the
-            # same database selected in the sidebar, then refresh cached views.
-            os.environ["DB_PATH"] = db_path
-            with st.spinner("Fetching prices, news, and market discussion..."):
-                totals = run_ingestion()
-            with st.spinner("Computing technical indicators and sentiment..."):
-                feature_totals = run_features()
-            totals.update({f"features_{key}": value for key, value in feature_totals.items()})
-            st.session_state["last_auto_ingest"] = time.time()
-            for cached_loader in (load_assets, load_prices, load_technical, load_aggregates, load_news, load_social, load_ingestion_log, load_model_runs, load_validation_summary):
-                cached_loader.clear()
-            st.sidebar.success("Ingestion complete: " + (", ".join(f"{k}={v}" for k, v in totals.items()) or "no records fetched"))
+            totals = _do_refresh(db_path)
+            st.sidebar.success("Refreshed: " + (", ".join(f"{k}={v}" for k, v in totals.items()) or "no new records"))
             st.rerun()
-        except Exception as exc:
-            st.sidebar.error(f"Data refresh failed: {exc}")
+        except Exception:
+            st.sidebar.error("Refresh failed - the market data source may be temporarily unavailable. Try again shortly.")
+
     if not Path(db_path).exists():
         st.warning(f"No database at {db_path}. Run: python run_pipeline.py all")
         st.stop()
 
-    # Streamlit reruns the script when the auto-refresh timer fires. Keep the
-    # last ingestion time in session state so a selector change does not call
-    # external APIs repeatedly, while the open dashboard stays current.
-    last_auto_ingest = float(st.session_state.get("last_auto_ingest", 0.0))
-    if time.time() - last_auto_ingest >= refresh_minutes * 60:
+    # Pull fresh data once per browser session when the dashboard is first
+    # opened (not on every widget interaction, and not on a background
+    # timer - this is a manual/on-load refresh, not a live feed).
+    if last_refresh_at == 0.0:
         try:
-            os.environ["DB_PATH"] = db_path
-            with st.spinner("Updating prices, news, and market discussion..."):
-                run_ingestion()
-            with st.spinner("Computing technical indicators and sentiment..."):
-                run_features()
-            st.session_state["last_auto_ingest"] = time.time()
-            for cached_loader in (load_assets, load_prices, load_technical, load_aggregates, load_news, load_social, load_ingestion_log, load_model_runs, load_validation_summary):
-                cached_loader.clear()
-        except Exception as exc:
-            st.warning(f"Automatic data refresh failed: {exc}")
+            _do_refresh(db_path)
+        except Exception:
+            st.warning("Couldn't reach the market data source on load - showing the last saved data. Use Refresh in the sidebar to try again.")
 
     try:
         assets = load_assets(db_path)

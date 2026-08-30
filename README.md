@@ -68,7 +68,7 @@ The Render Web Service start command is:
 streamlit run src/trading_assistant/dashboard/app.py --server.port $PORT --server.address 0.0.0.0
 ```
 
-After adding `FINNHUB_API_KEY` or `ALPHA_VANTAGE_API_KEY` under Render Environment Variables, the dashboard automatically refreshes prices and news when it is open. The Market Discussion panel also fetches public Google News RSS results and does not require another key. The **Refresh news and prices now** button is also available for an immediate update. The selected asset and interval update the panels immediately. Set `AUTO_REFRESH_MINUTES` to change the cadence and `PRICE_INTERVALS` to a comma-separated list such as `1d,1h,1wk`; the configured intervals are fetched for every asset. CryptoPanic is optional and is not required for stock news. Background updates while nobody is viewing the page require a separate scheduled service and durable shared storage.
+After adding `FINNHUB_API_KEY` or `ALPHA_VANTAGE_API_KEY` under Render Environment Variables, the dashboard pulls fresh prices and news once when it's first opened in a browser session, and any time you click **🔄 Refresh prices & news** in the sidebar. There is no background timer - nothing is fetched while nobody has the page open. The Market Discussion panel also fetches public Google News RSS results and does not require another key. The selected asset and interval update the panels immediately. Set `PRICE_INTERVALS` to a comma-separated list such as `1d,1h,1wk`; the configured intervals are fetched for every asset. CryptoPanic is optional and is not required for stock news.
 
 ## What the dashboard shows
 
