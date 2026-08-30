@@ -408,7 +408,7 @@ def main() -> None:
             st.info(f"No price bars for {symbol} {interval} yet.")
         else:
             frame = prices.copy()
-            frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)
+            frame["timestamp"] = pd.to_datetime(frame["timestamp"], format="mixed", utc=True)
             frame = frame.set_index("timestamp")
             last, change = frame["close"].iloc[-1], frame["close"].iloc[-1] - frame["close"].iloc[-2] if len(frame) > 1 else 0.0
             left, right = st.columns([3, 1])
@@ -426,12 +426,12 @@ def main() -> None:
             st.info("No technical features yet - automatic computation will run after the next data refresh")
         else:
             frame = technical.copy()
-            frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)
+            frame["timestamp"] = pd.to_datetime(frame["timestamp"], format="mixed", utc=True)
             frame = frame.set_index("timestamp")
             trend = frame[["sma_20", "sma_50", "sma_200"]].copy()
             if not prices.empty:
                 price_frame = prices.copy()
-                price_frame["timestamp"] = pd.to_datetime(price_frame["timestamp"], utc=True)
+                price_frame["timestamp"] = pd.to_datetime(price_frame["timestamp"], format="mixed", utc=True)
                 trend = trend.join(price_frame.set_index("timestamp")["close"], how="outer").sort_index()
             st.subheader("Trend")
             st.line_chart(trend[["close", "sma_20", "sma_50", "sma_200"]].dropna(how="all"), height=280)
