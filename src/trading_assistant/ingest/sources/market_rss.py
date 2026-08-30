@@ -3,12 +3,42 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 import xml.etree.ElementTree as ET
 
 import requests
 
 log = logging.getLogger(__name__)
+
+_RSS_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; Sentrune/0.1; +https://github.com/RootedMani/Sentrune)",
+    "Accept": "application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.1",
+}
+
+
+def _fetch_items(symbol: str, name: str) -> list[ET.Element]:
+    query = f'"{symbol}" {name} market'
+    params = {"q": query, "hl": "en-US", "gl": "US", "ceid": "US:en"}
+    url = "https://news.google.com/rss/search?" + urlencode(params)
+    response = requests.get(url, timeout=20, headers=_RSS_HEADERS, allow_redirects=True)
+    response.raise_for_status()
+    try:
+        root = ET.fromstring(response.content)
+    except ET.ParseError:
+        log.warning(
+            "Google News RSS returned non-XML for %s (status=%s, final_url=%s, content_type=%s, body starts: %r)",
+            symbol, response.status_code, response.url, response.headers.get("content-type"), response.text[:300],
+        )
+        raise
+    items = root.findall("./channel/item")
+    if not items:
+        log.warning(
+            "Google News RSS returned 0 items for %s (status=%s, final_url=%s, content_type=%s, body starts: %r)",
+            symbol, response.status_code, response.url, response.headers.get("content-type"), response.text[:300],
+        )
+    elif urlparse(response.url).hostname not in {"news.google.com", "www.news.google.com"}:
+        log.warning("Google News RSS followed a redirect for %s to %s", symbol, response.url)
+    return items
 
 
 def _published(value: str | None) -> str:
@@ -31,23 +61,8 @@ def fetch(assets: list[dict], start: datetime | None = None, limit: int = 20) ->
     for asset in assets:
         symbol = str(asset["symbol"]).upper()
         name = str(asset.get("name") or symbol)
-        query = f'"{symbol}" {name} market'
-        params = {"q": query, "hl": "en-US", "gl": "US", "ceid": "US:en"}
-        url = "https://news.google.com/rss/search?" + urlencode(params)
         try:
-            response = requests.get(url, timeout=20, headers={"User-Agent": "Sentrune/0.1 market discussion reader"})
-            response.raise_for_status()
-            root = ET.fromstring(response.content)
-            items = root.findall("./channel/item")
-            if not items:
-                # A 200 with zero <item> elements almost always means Google
-                # served a block/consent page instead of the feed rather than
-                # a genuine "no news" result - log a snippet so this is
-                # diagnosable instead of silently looking like "no new items".
-                log.warning(
-                    "Google News RSS returned 0 items for %s (status=%s, body starts: %r)",
-                    symbol, response.status_code, response.text[:200],
-                )
+            items = _fetch_items(symbol, name)
             skipped_stale = 0
             for item in items[:limit]:
                 link = (item.findtext("link") or "").strip()
@@ -90,13 +105,8 @@ def fetch_news(assets: list[dict], start: datetime | None = None, limit: int = 2
     for asset in assets:
         symbol = str(asset["symbol"]).upper()
         name = str(asset.get("name") or symbol)
-        params = {"q": f'"{symbol}" {name} market', "hl": "en-US", "gl": "US", "ceid": "US:en"}
-        url = "https://news.google.com/rss/search?" + urlencode(params)
         try:
-            response = requests.get(url, timeout=20, headers={"User-Agent": "Sentrune/0.1 market news reader"})
-            response.raise_for_status()
-            root = ET.fromstring(response.content)
-            for item in root.findall("./channel/item")[:limit]:
+            for item in _fetch_items(symbol, name)[:limit]:
                 link = (item.findtext("link") or "").strip()
                 title = (item.findtext("title") or "").strip()
                 if not link or not title:

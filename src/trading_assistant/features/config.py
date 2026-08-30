@@ -17,6 +17,12 @@ class FeatureSettings:
     sentiment_windows_hours: list[int]
     finbert_model: str
     sentiment_batch_size: int
+    lag_horizons: list[int]
+    zscore_window: int
+    vol_window: int
+    vol_rank_window: int
+    high_low_window_crypto: int
+    high_low_window_stock: int
 
 
 def load_config(path: str = "config/features.yaml") -> FeatureSettings:
@@ -32,4 +38,10 @@ def load_config(path: str = "config/features.yaml") -> FeatureSettings:
         sentiment_windows_hours=raw.get("sentiment_windows_hours", [24]),
         finbert_model=raw.get("finbert_model", "ProsusAI/finbert"),
         sentiment_batch_size=int(raw.get("sentiment_batch_size", 16)),
+        lag_horizons=[int(value) for value in raw.get("lag_horizons", [1, 3, 6, 12, 24])],
+        zscore_window=int(raw.get("zscore_window", 20)),
+        vol_window=int(raw.get("vol_window", 20)),
+        vol_rank_window=int(raw.get("vol_rank_window", 252)),
+        high_low_window_crypto=int(raw.get("high_low_window_crypto", 365)),
+        high_low_window_stock=int(raw.get("high_low_window_stock", 252)),
     )
