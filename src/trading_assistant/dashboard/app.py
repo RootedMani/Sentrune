@@ -332,10 +332,15 @@ def main() -> None:
         st.warning(f"No database at {db_path}. Run: python run_pipeline.py all")
         st.stop()
 
-    # Pull fresh data once per browser session when the dashboard is first
-    # opened (not on every widget interaction, and not on a background
-    # timer - this is a manual/on-load refresh, not a live feed).
-    if last_refresh_at == 0.0:
+    # Pull fresh data when the page loads and the last pull is more than a
+    # few minutes old. session_state survives a browser reload (it's tied to
+    # the session, not the page), so checking "have we ever refreshed" only
+    # fired once, ever - reloading the page did nothing. Checking staleness
+    # instead means a reload after a few minutes away refreshes again, while
+    # quick reruns (changing the asset dropdown, etc.) right after a refresh
+    # don't re-trigger it.
+    STALE_AFTER_SECONDS = 5 * 60
+    if time.time() - last_refresh_at >= STALE_AFTER_SECONDS:
         try:
             _do_refresh(db_path)
         except Exception:
