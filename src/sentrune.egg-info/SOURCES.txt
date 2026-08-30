@@ -34,6 +34,7 @@ src/trading_assistant/ingest/normalize/price_bars.py
 src/trading_assistant/ingest/normalize/social_items.py
 src/trading_assistant/ingest/sources/__init__.py
 src/trading_assistant/ingest/sources/crypto.py
+src/trading_assistant/ingest/sources/market_rss.py
 src/trading_assistant/ingest/sources/news_crypto.py
 src/trading_assistant/ingest/sources/news_stocks.py
 src/trading_assistant/ingest/sources/reddit.py

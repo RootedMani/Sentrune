@@ -12,6 +12,19 @@ from .db.connection import connect, initialize, upsert_aggregate, upsert_sentime
 from .sentiment.aggregation import aggregate_items
 from .sentiment.finbert_scorer import FinBERTScorer
 from .technical.indicators import compute_indicators
+from .technical.lag_momentum import compute_lag_momentum
+from .technical.regime import compute_regime
+
+TECHNICAL_COLUMNS = (
+    "sma_20", "sma_50", "sma_200", "ema_12", "ema_26", "macd", "macd_signal", "macd_histogram",
+    "rsi_14", "stoch_k", "stoch_d", "bb_lower", "bb_middle", "bb_upper", "atr_14", "obv", "volume_sma_20",
+    "adx_14", "plus_di_14", "minus_di_14",
+    "ichimoku_tenkan", "ichimoku_kijun", "ichimoku_senkou_a", "ichimoku_senkou_b", "ichimoku_chikou",
+    "volatility_20", "return_autocorr_20", "volume_price_divergence",
+    "candle_body_ratio", "candle_doji", "candle_hammer", "candle_bullish_engulfing", "candle_bearish_engulfing",
+    "return_1", "return_3", "return_5", "return_10", "zscore_20",
+    "volatility_regime", "day_of_week", "dist_from_high", "dist_from_low",
+)
 
 log = logging.getLogger(__name__)
 
@@ -44,13 +57,19 @@ def compute_technical(conn: sqlite3.Connection, settings) -> int:
             # requests. Keep the newest copy before pandas-ta sees the index.
             frame = frame.drop_duplicates(subset=["timestamp"], keep="last").sort_values("timestamp").set_index("timestamp")
             result = compute_indicators(frame, settings.indicators)
+            result = compute_lag_momentum(result, horizons=settings.lag_horizons, zscore_window=settings.zscore_window)
+            high_low_window = settings.high_low_window_crypto if asset["asset_type"] == "crypto" else settings.high_low_window_stock
+            result = compute_regime(
+                result, vol_window=settings.vol_window, vol_rank_window=settings.vol_rank_window,
+                high_low_window=high_low_window,
+            )
             state_key = f"{asset['id']}:{interval}"
             last_processed = _state_get(conn, "technical", state_key)
             for timestamp, row in result.iterrows():
                 if last_processed and str(timestamp) <= last_processed:
                     continue
                 values = {"asset_id": asset["id"], "interval": interval, "timestamp": str(timestamp)}
-                for column in ("sma_20", "sma_50", "sma_200", "ema_12", "ema_26", "macd", "macd_signal", "macd_histogram", "rsi_14", "stoch_k", "stoch_d", "bb_lower", "bb_middle", "bb_upper", "atr_14", "obv", "volume_sma_20"):
+                for column in TECHNICAL_COLUMNS:
                     value = row.get(column)
                     values[column] = None if pd.isna(value) else float(value)
                 if any(values[c] is not None for c in values if c not in {"asset_id", "interval", "timestamp"}):

@@ -3,7 +3,18 @@ db_path: data/trading_assistant.sqlite3
 intervals: [1d]
 # Empty means all active assets in the data-layer assets table.
 assets: []
-indicators: [sma, ema, macd, rsi, stoch, bollinger, atr, obv, volume_sma]
+indicators: [sma, ema, macd, rsi, stoch, bollinger, atr, obv, volume_sma, adx, ichimoku, volatility, autocorr, volume_price_divergence, candlestick]
 sentiment_windows_hours: [24, 168]
 finbert_model: ProsusAI/finbert
 sentiment_batch_size: 16
+# Multi-horizon past-return features (bars).
+lag_horizons: [1, 3, 5, 10]
+# Rolling window for the price z-score momentum feature.
+zscore_window: 20
+# Rolling window for realized volatility used in the volatility regime bucket.
+vol_window: 20
+# Trailing window the volatility percentile rank is computed against.
+vol_rank_window: 252
+# Distance-from-high/low lookback window, per asset type (crypto trades every day).
+high_low_window_stock: 252
+high_low_window_crypto: 365

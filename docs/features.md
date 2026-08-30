@@ -34,13 +34,26 @@ The default model is [`ProsusAI/finbert`](https://huggingface.co/ProsusAI/finber
 |---|---|
 | `intervals` | Price-bar intervals to process, such as `1d` or `1h`. |
 | `assets` | Optional list of symbols; empty means every active asset. |
-| `indicators` | Indicator families computed with pandas-ta. |
+| `indicators` | Indicator families computed with pandas-ta plus this package's own regime/candlestick logic. |
 | `sentiment_windows_hours` | Trailing aggregation windows, such as 24 and 168 hours. |
 | `sentiment_batch_size` | Number of texts passed to FinBERT per inference batch. |
+| `lag_horizons` | Bar counts for past multi-horizon return features (default `[1, 3, 5, 10]`). |
+| `zscore_window` | Rolling window for the price z-score momentum feature. |
+| `vol_window` | Rolling window for realized volatility feeding the volatility-regime bucket. |
+| `vol_rank_window` | Trailing window the volatility percentile rank is computed against. |
+| `high_low_window_stock` / `high_low_window_crypto` | Lookback for distance-from-high/low, split by asset type since crypto trades every calendar day. |
 
 ## Technical features
 
-Technical features use a **wide** table because downstream model training commonly selects a timestamp row as a feature vector. The additive `technical_features` table contains SMA(20/50/200), EMA(12/26), MACD, MACD signal and histogram, RSI(14), stochastic K/D, Bollinger lower/middle/upper bands, ATR(14), OBV, and volume SMA(20). Warm-up rows remain null and are not treated as errors; a row is stored when at least one configured indicator has a value.
+Technical features use a **wide** table because downstream model training commonly selects a timestamp row as a feature vector. The additive `technical_features` table contains:
+
+- **Core indicators** (pandas-ta): SMA(20/50/200), EMA(12/26), MACD/signal/histogram, RSI(14), stochastic K/D, Bollinger lower/middle/upper bands, ATR(14), OBV, volume SMA(20), ADX(14) with +DI/-DI, and Ichimoku tenkan/kijun/senkou A/B.
+- **Trend-shape features** (`lag_momentum.py`): past returns over 1/3/5/10 bars and a rolling z-score of price against its own trailing mean/std, so the model sees momentum rather than only a current indicator level.
+- **Regime features** (`regime.py`): a causal volatility-regime bucket (0/1/2, ranked against trailing history only — no lookahead), day-of-week, and distance from the trailing high/low.
+- **Volatility/co-movement features**: rolling realized volatility, rolling lag-1 return autocorrelation, and rolling price/volume correlation ("volume-price divergence").
+- **Candlestick flags** (dependency-free, no TA-Lib): body ratio, doji, hammer, bullish/bearish engulfing.
+
+Warm-up rows remain null and are not treated as errors; a row is stored when at least one configured indicator has a value. **`ichimoku_chikou` is stored for charting but intentionally excluded from the modeling layer's default feature set** — pandas-ta computes it from `close[t + displacement]`, i.e. it depends on future closes, so training on it would leak the label. See `modeling/compute.py::DEFAULT_FEATURES` and the regression test in `tests/features/test_indicators.py`.
 
 ## Sentiment features
 
@@ -50,7 +63,7 @@ The scalar used by `sentiment_aggregates` is **positive probability minus negati
 
 ## Additive schema
 
-Only `schema_additions.sql` is executed. It creates `technical_features`, `text_sentiment`, `sentiment_aggregates`, and `feature_state`, with foreign keys to the existing `assets` table and indexes on the primary modeling query dimensions.
+Only `schema_additions.sql` is executed. It creates `technical_features`, `text_sentiment`, `sentiment_aggregates`, and `feature_state`, with foreign keys to the existing `assets` table and indexes on the primary modeling query dimensions. Columns added after the table's initial release (ADX, Ichimoku, lag/momentum, regime, candlestick) are migrated onto existing databases in place with `ALTER TABLE ... ADD COLUMN`, guarded by `PRAGMA table_info`, so an existing `data/trading_assistant.sqlite3` upgrades without a rebuild — see `_migrate_technical_features` in `features/db/connection.py`.
 
 ## Tests and non-goals
 
