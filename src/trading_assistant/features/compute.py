@@ -152,7 +152,7 @@ def compute_aggregates(conn: sqlite3.Connection, settings) -> int:
                 end_index = start_index
                 while end_index < len(asset_items) and asset_items[end_index]["timestamp"] <= window_end:
                     end_index += 1
-                upsert_aggregate(conn, aggregate_items(asset_items[start_index:end_index], asset["id"], window_end, hours))
+                upsert_aggregate(conn, aggregate_items(asset_items[start_index:end_index], asset["id"], window_end, hours, sentiment_half_life_hours=settings.sentiment_half_life_hours))
                 computed += 1
             if grid:
                 _state_mark(conn, "aggregate", state_key := f"{asset['id']}:{hours}", grid[-1].isoformat())

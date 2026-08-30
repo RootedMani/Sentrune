@@ -7,6 +7,7 @@ import pandas as pd
 # keeping these columns would make dropna discard every row.
 SENTIMENT_FEATURES = {
     "avg_sentiment",
+    "avg_sentiment_decayed",
     "mention_volume",
     "sentiment_volatility",
     "followed_avg_sentiment",

@@ -23,6 +23,7 @@ class FeatureSettings:
     vol_rank_window: int
     high_low_window_crypto: int
     high_low_window_stock: int
+    sentiment_half_life_hours: float
 
 
 def load_config(path: str = "config/features.yaml") -> FeatureSettings:
@@ -44,4 +45,5 @@ def load_config(path: str = "config/features.yaml") -> FeatureSettings:
         vol_rank_window=int(raw.get("vol_rank_window", 252)),
         high_low_window_crypto=int(raw.get("high_low_window_crypto", 365)),
         high_low_window_stock=int(raw.get("high_low_window_stock", 252)),
+        sentiment_half_life_hours=float(raw.get("sentiment_half_life_hours", 6.0)),
     )

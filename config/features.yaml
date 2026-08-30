@@ -15,3 +15,9 @@ vol_rank_window: 252
 # Crypto trades every day; stocks use the standard 252-session year.
 high_low_window_crypto: 365
 high_low_window_stock: 252
+
+# Recency decay for avg_sentiment_decayed: a mention's weight halves every N
+# hours of age inside its window (6h -> a 30-minute-old headline weighs ~0.94,
+# a 23-hour-old one ~0.07). <=0 disables decay; the decayed column then equals
+# the unweighted avg_sentiment.
+sentiment_half_life_hours: 6

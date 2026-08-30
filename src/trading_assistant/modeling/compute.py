@@ -17,8 +17,7 @@ from .validation.walk_forward import metrics, splits
 
 log = logging.getLogger(__name__)
 
-DEFAULT_FEATURES = ["sma_20", "sma_50", "sma_200", "ema_12", "ema_26", "macd", "macd_signal", "macd_histogram", "rsi_14", "stoch_k", "stoch_d", "bb_lower", "bb_middle", "bb_upper", "atr_14", "obv", "volume_sma_20", "avg_sentiment", "mention_volume", "sentiment_volatility", "followed_avg_sentiment", "followed_mention_volume", "followed_sentiment_volatility", "unattributed_avg_sentiment", "unattributed_mention_volume", "unattributed_sentiment_volatility"]
-
+DEFAULT_FEATURES = ["sma_20", "sma_50", "sma_200", "ema_12", "ema_26", "macd", "macd_signal", "macd_histogram", "rsi_14", "stoch_k", "stoch_d", "bb_lower", "bb_middle", "bb_upper", "atr_14", "obv", "volume_sma_20", "avg_sentiment", "avg_sentiment_decayed", "mention_volume", "sentiment_volatility", "followed_avg_sentiment", "followed_mention_volume", "followed_sentiment_volatility", "unattributed_avg_sentiment", "unattributed_mention_volume", "unattributed_sentiment_volatility"]
 
 def read_inputs(conn: sqlite3.Connection, settings) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     prices = pd.read_sql_query("SELECT * FROM price_bars WHERE interval=? ORDER BY asset_id,timestamp", conn, params=(settings.interval,))
