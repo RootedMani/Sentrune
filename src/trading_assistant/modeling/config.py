@@ -17,6 +17,10 @@ class Settings:
     min_train_size: int = 50
     test_size: int = 20
     feature_columns: list[str] | None = None
+    # Must match config/features.yaml's sentiment_windows_hours so the
+    # default feature-column names (avg_sentiment_24h, etc.) line up with
+    # what the feature-engineering layer actually wrote.
+    sentiment_windows_hours: list[int] | None = None
 
 
 def load_config(path: str = "config/modeling.yaml") -> Settings:
@@ -26,4 +30,6 @@ def load_config(path: str = "config/modeling.yaml") -> Settings:
     # can share durable storage while local development keeps repository defaults.
     data["db_path"] = os.getenv("DB_PATH") or data.get("db_path", "data/trading_assistant.sqlite3")
     data["model_dir"] = os.getenv("SENTRUNE_MODEL_DIR") or data.get("model_dir", "models")
+    if not data.get("sentiment_windows_hours"):
+        data["sentiment_windows_hours"] = [24, 168]
     return Settings(**data)

@@ -17,10 +17,27 @@ def test_forward_return_labels_use_configured_dead_zone():
 def test_asof_join_never_uses_future_sentiment_window():
     base = pd.DataFrame({"asset_id": [1, 1], "interval": ["1d", "1d"], "timestamp": ["2024-01-02T00:00:00+00:00", "2024-01-03T00:00:00+00:00"], "sma_20": [1.0, 2.0]})
     labels = pd.DataFrame({"asset_id": [1, 1], "interval": ["1d", "1d"], "timestamp": base["timestamp"], "label": [0, 2], "forward_return": [-.01, .01]})
-    sentiment = pd.DataFrame({"asset_id": [1, 1], "window_end": ["2024-01-01T00:00:00+00:00", "2024-01-04T00:00:00+00:00"], "avg_sentiment": [-.5, .9]})
-    result = assemble_features(base, sentiment, labels, ["sma_20", "avg_sentiment"])
-    assert result.loc[result.timestamp == pd.Timestamp("2024-01-02", tz="UTC"), "avg_sentiment"].iloc[0] == -.5
-    assert result.loc[result.timestamp == pd.Timestamp("2024-01-03", tz="UTC"), "avg_sentiment"].iloc[0] == -.5
+    sentiment = pd.DataFrame({"asset_id": [1, 1], "window_end": ["2024-01-01T00:00:00+00:00", "2024-01-04T00:00:00+00:00"], "window_hours": [24, 24], "avg_sentiment": [-.5, .9], "avg_sentiment_decayed": [-.5, .9], "mention_volume": [1, 1], "sentiment_volatility": [0.0, 0.0], "followed_avg_sentiment": [0.0, 0.0], "followed_mention_volume": [0, 0], "followed_sentiment_volatility": [0.0, 0.0], "unattributed_avg_sentiment": [-.5, .9], "unattributed_mention_volume": [1, 1], "unattributed_sentiment_volatility": [0.0, 0.0]})
+    result = assemble_features(base, sentiment, labels, ["sma_20", "avg_sentiment_24h"])
+    assert result.loc[result.timestamp == pd.Timestamp("2024-01-02", tz="UTC"), "avg_sentiment_24h"].iloc[0] == -.5
+    assert result.loc[result.timestamp == pd.Timestamp("2024-01-03", tz="UTC"), "avg_sentiment_24h"].iloc[0] == -.5
+
+
+def test_two_windows_never_get_mixed_together():
+    # Regression: a single merge_asof across both a 24h and a 168h aggregate
+    # row (sharing the same window_end) used to pick whichever was nearest,
+    # silently blending short- and long-window values row to row.
+    base = pd.DataFrame({"asset_id": [1], "interval": ["1d"], "timestamp": ["2024-01-02T00:00:00+00:00"], "sma_20": [1.0]})
+    labels = pd.DataFrame({"asset_id": [1], "interval": ["1d"], "timestamp": base["timestamp"], "label": [1], "forward_return": [0.0]})
+    common = {"avg_sentiment_decayed": None, "sentiment_volatility": 0.0, "followed_avg_sentiment": 0.0, "followed_mention_volume": 0, "followed_sentiment_volatility": 0.0, "unattributed_avg_sentiment": 0.0, "unattributed_mention_volume": 0, "unattributed_sentiment_volatility": 0.0}
+    sentiment = pd.DataFrame([
+        {"asset_id": 1, "window_end": "2024-01-01T00:00:00+00:00", "window_hours": 24, "avg_sentiment": -0.5, "mention_volume": 1, **common},
+        {"asset_id": 1, "window_end": "2024-01-01T00:00:00+00:00", "window_hours": 168, "avg_sentiment": 0.9, "mention_volume": 20, **common},
+    ])
+    result = assemble_features(base, sentiment, labels, ["sma_20", "avg_sentiment_24h", "avg_sentiment_168h"])
+    row = result.iloc[0]
+    assert row["avg_sentiment_24h"] == -0.5
+    assert row["avg_sentiment_168h"] == 0.9
 
 
 def test_baselines_return_three_class_probabilities():
@@ -36,13 +53,13 @@ def test_empty_sentiment_falls_back_to_technical_only_features():
     # sentiment_aggregates table; keeping sentiment columns dropped every row
     # via dropna and made training impossible for every asset.
     empty = pd.DataFrame(columns=["asset_id", "window_end", "avg_sentiment", "mention_volume"])
-    usable, dropped = select_feature_columns(empty, ["sma_20", "rsi_14", "avg_sentiment", "mention_volume"])
+    usable, dropped = select_feature_columns(empty, ["sma_20", "rsi_14", "avg_sentiment_24h", "mention_volume_24h"])
     assert usable == ["sma_20", "rsi_14"]
-    assert dropped == ["avg_sentiment", "mention_volume"]
+    assert dropped == ["avg_sentiment_24h", "mention_volume_24h"]
     # With sentiment data present nothing is dropped.
     populated = pd.DataFrame({"asset_id": [1], "window_end": ["2024-01-01T00:00:00+00:00"], "avg_sentiment": [0.1], "mention_volume": [3]})
-    usable, dropped = select_feature_columns(populated, ["sma_20", "avg_sentiment"])
-    assert usable == ["sma_20", "avg_sentiment"]
+    usable, dropped = select_feature_columns(populated, ["sma_20", "avg_sentiment_24h"])
+    assert usable == ["sma_20", "avg_sentiment_24h"]
     assert dropped == []
 
 

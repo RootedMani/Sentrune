@@ -51,7 +51,10 @@ def test_unweighted_mean_unchanged_by_decay_feature():
 
 
 def test_ignores_items_outside_window_or_asset():
+    # item1 is 25h old in a 24h window (outside); item2 is in-window but the
+    # wrong asset. Both should be excluded, leaving an empty aggregate.
     items = [_item(1.0, 25.0), _item(-1.0, 1.0, asset_id=2)]
     result = aggregate_items(items, 1, WINDOW_END, 24)
-    assert result["avg_sentiment_decayed"] == pytest.approx(1.0)
-    assert result["mention_volume"] == 1
+    assert result["avg_sentiment_decayed"] is None
+    assert result["avg_sentiment"] is None
+    assert result["mention_volume"] == 0

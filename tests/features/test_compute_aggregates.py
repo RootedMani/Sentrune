@@ -37,7 +37,7 @@ def test_aggregates_cover_history_not_just_latest_window():
     conn.execute("INSERT INTO text_sentiment(item_type,item_id,positive_prob,negative_prob,neutral_prob,label,computed_at) VALUES('social',?,0.9,0.0,0.1,'positive','2024-01-01T00:00:00+00:00')", (cur.lastrowid,))
     conn.commit()
 
-    settings = SimpleNamespace(sentiment_windows_hours=[24])
+    settings = SimpleNamespace(sentiment_windows_hours=[24], sentiment_half_life_hours=6.0)
     total = compute_aggregates(conn, settings)
     assert total >= 10
     ends = conn.execute("SELECT COUNT(DISTINCT window_end) FROM sentiment_aggregates WHERE asset_id=1 AND window_hours=24").fetchone()[0]
@@ -60,7 +60,7 @@ def test_aggregates_are_idempotent_on_rerun():
         conn.execute("INSERT INTO news_item_assets(news_item_id,asset_id) VALUES(?,1)", (cur.lastrowid,))
         conn.execute("INSERT INTO text_sentiment(item_type,item_id,positive_prob,negative_prob,neutral_prob,label,computed_at) VALUES('news',?,0.6,0.1,0.3,'positive','2024-01-01T00:00:00+00:00')", (cur.lastrowid,))
     conn.commit()
-    settings = SimpleNamespace(sentiment_windows_hours=[24])
+    settings = SimpleNamespace(sentiment_windows_hours=[24], sentiment_half_life_hours=6.0)
     first = compute_aggregates(conn, settings)
     second = compute_aggregates(conn, settings)
     assert first > 0 and second == first

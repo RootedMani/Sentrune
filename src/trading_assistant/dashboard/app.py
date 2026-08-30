@@ -51,8 +51,23 @@ def _seed_persistent_storage() -> None:
 _seed_persistent_storage()
 
 LABELS = {0: "down", 1: "flat", 2: "up"}
-TECHNICAL_COLUMNS = ["sma_20", "sma_50", "sma_200", "ema_12", "ema_26", "macd", "macd_signal", "macd_histogram", "rsi_14", "stoch_k", "stoch_d", "bb_lower", "bb_middle", "bb_upper", "atr_14", "obv", "volume_sma_20"]
-SENTIMENT_COLUMNS = ["avg_sentiment", "mention_volume", "sentiment_volatility", "followed_avg_sentiment", "followed_mention_volume", "followed_sentiment_volatility", "unattributed_avg_sentiment", "unattributed_mention_volume", "unattributed_sentiment_volatility"]
+# Must match features/compute.py's TECHNICAL_COLUMNS - the full set of
+# indicators actually persisted per bar - or live prediction fails with
+# "unknown feature column" for any indicator missing from this list.
+TECHNICAL_COLUMNS = [
+    "sma_20", "sma_50", "sma_200", "ema_12", "ema_26", "macd", "macd_signal", "macd_histogram",
+    "rsi_14", "stoch_k", "stoch_d", "bb_lower", "bb_middle", "bb_upper", "atr_14", "obv", "volume_sma_20",
+    "adx_14", "plus_di_14", "minus_di_14",
+    "ichimoku_tenkan", "ichimoku_kijun", "ichimoku_senkou_a", "ichimoku_senkou_b", "ichimoku_chikou",
+    "volatility_20", "return_autocorr_20", "volume_price_divergence",
+    "candle_body_ratio", "candle_doji", "candle_hammer", "candle_bullish_engulfing", "candle_bearish_engulfing",
+    "return_1", "return_3", "return_5", "return_10", "zscore_20",
+    "volatility_regime", "day_of_week", "dist_from_high", "dist_from_low",
+]
+# Base sentiment_aggregates columns, before the per-window suffix
+# (avg_sentiment_24h, avg_sentiment_decayed_168h, ...) that the modeling
+# layer uses - see modeling/features.py's sentiment_feature_columns().
+SENTIMENT_BASE_COLUMNS = ["avg_sentiment", "avg_sentiment_decayed", "mention_volume", "sentiment_volatility", "followed_avg_sentiment", "followed_mention_volume", "followed_sentiment_volatility", "unattributed_avg_sentiment", "unattributed_mention_volume", "unattributed_sentiment_volatility"]
 
 st.set_page_config(page_title="Sentrune", page_icon="📈", layout="wide")
 
@@ -222,20 +237,27 @@ def latest_prediction(db_path: str, asset_id: int, interval: str) -> dict:
     feature_columns = artifact["feature_columns"]
 
     values: dict[str, float | None] = {}
+    sentiment_columns: list[tuple[str, str, int]] = []  # (feature_column, base_column, window_hours)
     for column in feature_columns:
         if column in TECHNICAL_COLUMNS:
             value = technical[column]
             values[column] = None if value is None else float(value)
-        elif column not in SENTIMENT_COLUMNS:
+            continue
+        base, _, suffix = column.rpartition("_")
+        if base in SENTIMENT_BASE_COLUMNS and suffix.endswith("h") and suffix[:-1].isdigit():
+            sentiment_columns.append((column, base, int(suffix[:-1])))
+        else:
             return {"error": f"unknown feature column in artifact: {column}"}
-    sentiment_columns = [c for c in feature_columns if c in SENTIMENT_COLUMNS]
     if sentiment_columns:
         with connect(db_path) as conn:
-            agg = conn.execute(
-                "SELECT * FROM sentiment_aggregates WHERE asset_id=? AND window_end<=? ORDER BY window_end DESC, id DESC LIMIT 1",
-                (asset_id, technical["timestamp"])).fetchone()
-        for column in sentiment_columns:
-            values[column] = float(agg[column]) if agg is not None and agg[column] is not None else None
+            for window_hours in {hours for _, _, hours in sentiment_columns}:
+                agg = conn.execute(
+                    "SELECT * FROM sentiment_aggregates WHERE asset_id=? AND window_hours=? AND window_end<=? ORDER BY window_end DESC, id DESC LIMIT 1",
+                    (asset_id, window_hours, technical["timestamp"])).fetchone()
+                for feature_column, base_column, hours in sentiment_columns:
+                    if hours != window_hours:
+                        continue
+                    values[feature_column] = float(agg[base_column]) if agg is not None and agg[base_column] is not None else None
     missing = sorted(c for c, v in values.items() if v is None)
     if missing:
         return {"error": f"cannot predict yet, missing features: {', '.join(missing)}"}

@@ -61,4 +61,3 @@ CREATE TABLE IF NOT EXISTS feature_state (
     last_processed_at TEXT,
     PRIMARY KEY(feature_name, entity_key)
 );
-ALTER TABLE sentiment_aggregates ADD COLUMN avg_sentiment_decayed REAL;
