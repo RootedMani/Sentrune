@@ -39,7 +39,10 @@ def compute_technical(conn: sqlite3.Connection, settings) -> int:
             if not rows:
                 log.warning("No price history for %s %s", asset["symbol"], interval)
                 continue
-            frame = pd.DataFrame([dict(r) for r in rows]).set_index("timestamp")
+            frame = pd.DataFrame([dict(r) for r in rows])
+            # Providers can overlap at the boundary between incremental
+            # requests. Keep the newest copy before pandas-ta sees the index.
+            frame = frame.drop_duplicates(subset=["timestamp"], keep="last").sort_values("timestamp").set_index("timestamp")
             result = compute_indicators(frame, settings.indicators)
             state_key = f"{asset['id']}:{interval}"
             last_processed = _state_get(conn, "technical", state_key)

@@ -60,21 +60,24 @@ def load_assets(db_path: str) -> pd.DataFrame:
 @st.cache_data(ttl=30)
 def load_prices(db_path: str, asset_id: int, interval: str) -> pd.DataFrame:
     with connect(db_path) as conn:
-        return pd.read_sql_query("SELECT timestamp, open, high, low, close, volume FROM price_bars WHERE asset_id=? AND interval=? ORDER BY timestamp", conn, params=(asset_id, interval))
+        frame = pd.read_sql_query("SELECT timestamp, open, high, low, close, volume FROM price_bars WHERE asset_id=? AND interval=? ORDER BY timestamp", conn, params=(asset_id, interval))
+    return frame.drop_duplicates(subset=["timestamp"], keep="last")
 
 
 @st.cache_data(ttl=30)
 def load_technical(db_path: str, asset_id: int, interval: str) -> pd.DataFrame:
     with connect(db_path) as conn:
         columns = ", ".join(["timestamp"] + TECHNICAL_COLUMNS)
-        return pd.read_sql_query(f"SELECT {columns} FROM technical_features WHERE asset_id=? AND interval=? ORDER BY timestamp", conn, params=(asset_id, interval))
+        frame = pd.read_sql_query(f"SELECT {columns} FROM technical_features WHERE asset_id=? AND interval=? ORDER BY timestamp", conn, params=(asset_id, interval))
+    return frame.drop_duplicates(subset=["timestamp"], keep="last")
 
 
 @st.cache_data(ttl=30)
 def load_aggregates(db_path: str, asset_id: int) -> pd.DataFrame:
     with connect(db_path) as conn:
         columns = ", ".join(["window_end", "window_hours"] + SENTIMENT_COLUMNS)
-        return pd.read_sql_query(f"SELECT {columns} FROM sentiment_aggregates WHERE asset_id=? ORDER BY window_end", conn, params=(asset_id,))
+        frame = pd.read_sql_query(f"SELECT {columns} FROM sentiment_aggregates WHERE asset_id=? ORDER BY window_end", conn, params=(asset_id,))
+    return frame.drop_duplicates(subset=["window_end", "window_hours"], keep="last")
 
 
 @st.cache_data(ttl=30)
