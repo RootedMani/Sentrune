@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 
 from trading_assistant.features.compute import run as run_features
 from trading_assistant.ingest.pipeline import run as run_ingestion
+from trading_assistant.modeling.explain import explain_prediction
 
 # app.py sits at src/trading_assistant/dashboard/ -> project root is 3 levels up.
 ROOT = Path(__file__).resolve().parents[3]
@@ -189,6 +190,23 @@ def load_validation_summary(db_path: str, run_id: int) -> pd.DataFrame:
             conn, params=(run_id,))
 
 
+def load_backtest_summary(db_path: str, run_id: int) -> pd.DataFrame:
+    """Per-fold threshold-strategy backtest results for the latest model run,
+    alongside the buy-and-hold return/Sharpe over the same test window so the
+    strategy's edge (or lack of one) is visible fold by fold, not just on
+    average - a strategy that wins on average by winning huge in one fold and
+    losing in the others is a very different result from consistent, modest
+    outperformance."""
+    if not table_exists(db_path, "strategy_backtests"):
+        return pd.DataFrame()
+    with connect(db_path) as conn:
+        return pd.read_sql_query(
+            """SELECT fold, total_return, sharpe, max_drawdown, win_rate, trades,
+                      baseline_total_return, baseline_sharpe
+               FROM strategy_backtests WHERE model_run_id=? ORDER BY fold""",
+            conn, params=(run_id,))
+
+
 def render_news_cards(news: pd.DataFrame) -> None:
     """Render linked, human-readable article cards instead of a raw SQL table."""
     for _, article in news.iterrows():
@@ -265,8 +283,14 @@ def latest_prediction(db_path: str, asset_id: int, interval: str) -> dict:
     X = pd.DataFrame([[values[c] for c in feature_columns]], columns=feature_columns)
     probabilities = artifact["model"].predict_proba(X)[0]
     classes = getattr(getattr(artifact["model"], "model", None), "classes_", [0, 1, 2])
-    return {"probabilities": {LABELS.get(int(c), str(c)): float(p) for c, p in zip(classes, probabilities)},
-            "as_of": technical["timestamp"], "model_run": run["id"], "features_used": feature_columns}
+    probability_dict = {LABELS.get(int(c), str(c)): float(p) for c, p in zip(classes, probabilities)}
+    result = {"probabilities": probability_dict,
+              "as_of": technical["timestamp"], "model_run": run["id"], "features_used": feature_columns}
+    try:
+        result["explanation"] = explain_prediction(artifact["model"], X, probability_dict)
+    except Exception as exc:  # explanation is a bonus, never block the raw prediction on it
+        log.warning("Could not build explanation for asset %s: %s", asset_id, exc)
+    return result
 
 
 def hint_for(counts: dict[str, int], has_ingest_log: bool) -> list[str]:
@@ -530,6 +554,16 @@ def main() -> None:
                     col.metric(name.upper(), f"{probabilities[name] * 100:.1f}%")
                 st.caption(f"As of {prediction['as_of']} | model run {prediction['model_run']} | {len(prediction['features_used'])} features")
                 st.bar_chart(pd.DataFrame({"probability": probabilities}, index=list(probabilities)), height=180)
+                explanation = prediction.get("explanation")
+                if explanation:
+                    st.markdown(f"**Why:** {explanation['sentence']}")
+                    if explanation["top_factors"]:
+                        factor_rows = pd.DataFrame([
+                            {"Factor": f["label"], "Reads as": f["meaning"], "Effect": f["direction"], "Current value": round(f["value"], 4)}
+                            for f in explanation["top_factors"]
+                        ])
+                        st.dataframe(factor_rows, width="stretch", hide_index=True)
+                    st.caption("Explanation shows what pushed this specific prediction, not a general ranking of feature importance - a feature can be globally important and still play no role in today's reading.")
             st.subheader("Walk-forward validation (latest run)")
             summary = load_validation_summary(db_path, int(latest_run["id"]))
             if summary.empty:
@@ -537,6 +571,26 @@ def main() -> None:
             else:
                 st.dataframe(summary, width="stretch", hide_index=True)
                 st.caption("LightGBM compared against the naive baselines; log loss closer to 0 is better.")
+            st.subheader("Simple threshold strategy backtest (latest run)")
+            backtest_summary = load_backtest_summary(db_path, int(latest_run["id"]))
+            if backtest_summary.empty:
+                st.info("No strategy backtest recorded.")
+            else:
+                display = backtest_summary.copy()
+                for col in ("total_return", "max_drawdown", "win_rate", "baseline_total_return"):
+                    display[col] = (display[col] * 100).round(1)
+                display = display.rename(columns={
+                    "total_return": "Return %", "sharpe": "Sharpe", "max_drawdown": "Max drawdown %",
+                    "win_rate": "Win rate %", "trades": "Trades", "baseline_total_return": "Buy&hold return %",
+                    "baseline_sharpe": "Buy&hold Sharpe",
+                })
+                st.dataframe(display, width="stretch", hide_index=True)
+                st.caption(
+                    "Per-fold result of only taking a position when the model's up/down probability clears a "
+                    "confidence threshold, net of a modeled fee+slippage cost - compared against simply holding "
+                    "the asset over the same window. This is a simple illustrative rule, not investment advice, "
+                    "and folds with zero trades mean the model was never confident enough to signal."
+                )
             with st.expander("Recent training runs"):
                 st.dataframe(runs, width="stretch", hide_index=True)
 

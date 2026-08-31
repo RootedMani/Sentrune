@@ -55,10 +55,10 @@ def _env() -> dict[str, str]:
     return dict(os.environ, DB_PATH=str(DB_PATH))
 
 
-def run_step(name: str) -> int:
+def run_step(name: str, extra_args: list[str] | None = None) -> int:
     module = STEPS[name]
     print(f"\n=== {name} ({module}) ===")
-    return subprocess.call([sys.executable, "-m", module], cwd=str(ROOT), env=_env())
+    return subprocess.call([sys.executable, "-m", module, *(extra_args or [])], cwd=str(ROOT), env=_env())
 
 
 def status() -> None:
@@ -86,7 +86,12 @@ def status() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("command", choices=["status", "ingest", "features", "train", "all", "dashboard"], help="pipeline step to run")
+    parser.add_argument("step_args", nargs=argparse.REMAINDER, help="extra arguments forwarded to the step's own CLI, e.g. `python run_pipeline.py features -- --force-technical`")
     args = parser.parse_args()
+    # REMAINDER greedily grabs a leading '--' separator if present; strip it
+    # so `features -- --force-technical` and `features --force-technical`
+    # both forward cleanly to the underlying module's argparse.
+    step_args = [a for a in args.step_args if a != "--"]
 
     if args.command == "status":
         status()
@@ -102,7 +107,7 @@ def main() -> None:
     preflight()
     order = ["ingest", "features", "train"] if args.command == "all" else [args.command]
     for name in order:
-        code = run_step(name)
+        code = run_step(name, step_args if name == args.command else None)
         if code != 0:
             print(f"\nStep '{name}' failed (exit {code}). Fix it before continuing - later steps depend on it.")
             raise SystemExit(code)

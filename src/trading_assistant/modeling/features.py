@@ -69,8 +69,18 @@ def assemble_features(technical: pd.DataFrame, sentiment: pd.DataFrame, labels: 
     (avg_sentiment_24h, avg_sentiment_168h, ...) and joined separately so both
     are always present together, never blended.
     """
+    # Both frames' timestamps come from SQLite as plain strings, and pandas'
+    # str(Timestamp) (used when technical_features rows are written) and the
+    # ISO 'T'-separated format (used by price_bars/labels) are NOT the same
+    # string ("2024-08-28 00:00:00+00:00" vs "2024-08-28T00:00:00+00:00") -
+    # merging on the raw strings silently matches zero rows. Normalize both
+    # to actual datetimes before joining, the same way the sentiment join
+    # below already does.
+    technical = technical.copy()
+    technical["timestamp"] = pd.to_datetime(technical["timestamp"], utc=True)
+    labels = labels.copy()
+    labels["timestamp"] = pd.to_datetime(labels["timestamp"], utc=True)
     base = technical.merge(labels[["asset_id", "interval", "timestamp", "label", "forward_return"]], on=["asset_id", "interval", "timestamp"], how="inner")
-    base["timestamp"] = pd.to_datetime(base["timestamp"], utc=True)
     base = base.sort_values(["timestamp", "asset_id"])
     if sentiment is not None and not sentiment.empty and not base.empty:
         sentiment = sentiment.copy()

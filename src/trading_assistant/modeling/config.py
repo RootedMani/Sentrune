@@ -21,6 +21,17 @@ class Settings:
     # default feature-column names (avg_sentiment_24h, etc.) line up with
     # what the feature-engineering layer actually wrote.
     sentiment_windows_hours: list[int] | None = None
+    # Strategy layer: converts model probabilities into positions for the
+    # walk-forward backtest. See modeling/strategy/rules.py for rationale.
+    strategy_long_threshold: float = 0.45
+    strategy_short_threshold: float = 0.45
+    strategy_allow_short: bool = False
+    strategy_fee_bps: float = 10.0
+    strategy_slippage_bps: float = 5.0
+    # Hyperparameter search (modeling/tuning). Off by default so a plain
+    # `python run_pipeline.py train` stays fast; enable for a real run.
+    tune_hyperparameters: bool = False
+    tuning_candidates: int = 25
 
 
 def load_config(path: str = "config/modeling.yaml") -> Settings:

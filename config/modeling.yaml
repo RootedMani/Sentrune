@@ -12,3 +12,18 @@ min_train_size: 50
 test_size: 20
 # Empty means the feature columns listed by the package default.
 feature_columns: null
+# Strategy layer (paper backtest run alongside walk-forward validation).
+# up/down probability must clear this threshold - and beat the other side -
+# before a position is taken; a high-probability "up" row below this bar
+# stays flat rather than trading a weak edge.
+strategy_long_threshold: 0.45
+strategy_short_threshold: 0.45
+# Shorting has real borrow costs/risk this prototype doesn't model - off by default.
+strategy_allow_short: false
+strategy_fee_bps: 10.0
+strategy_slippage_bps: 5.0
+# Optional walk-forward-respecting hyperparameter search (see
+# modeling/tuning/search.py). Off by default - a plain training run stays
+# fast; turn on for a real tuning pass, or use `train --tune` from the CLI.
+tune_hyperparameters: false
+tuning_candidates: 25

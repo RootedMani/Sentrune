@@ -163,10 +163,21 @@ def compute_aggregates(conn: sqlite3.Connection, settings) -> int:
     return total
 
 
-def run(config_path: str = "config/features.yaml") -> dict[str, int]:
+def run(config_path: str = "config/features.yaml", force_technical: bool = False) -> dict[str, int]:
     settings = load_config(config_path)
     conn = connect(settings.db_path)
     initialize(conn)
+    if force_technical:
+        # The incremental watermark in feature_state means a normal re-run
+        # skips every bar already marked processed - including bars computed
+        # by older, buggy indicator code before a fix landed. Use this after
+        # changing anything in technical/ (indicators.py, lag_momentum.py,
+        # regime.py) so previously-computed rows are recomputed with the
+        # fixed logic instead of silently kept stale.
+        conn.execute("DELETE FROM feature_state WHERE feature_name='technical'")
+        conn.execute("DELETE FROM technical_features")
+        conn.commit()
+        log.info("--force-technical: cleared technical_features and its watermark for full recompute")
     totals = {"technical": compute_technical(conn, settings), "sentiment": compute_sentiment(conn, settings), "aggregates": compute_aggregates(conn, settings)}
     conn.close()
     return totals
@@ -176,9 +187,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Compute technical and sentiment features from the data-layer SQLite database")
     parser.add_argument("--config", default="config/features.yaml")
     parser.add_argument("--log-level", default="INFO")
+    parser.add_argument("--force-technical", action="store_true", help="Recompute all technical features from scratch, ignoring the incremental watermark (use after changing indicator logic)")
     args = parser.parse_args()
     logging.basicConfig(level=getattr(logging, args.log_level.upper(), logging.INFO), format="%(asctime)s %(levelname)s %(name)s: %(message)s")
-    run(args.config)
+    run(args.config, force_technical=args.force_technical)
 
 
 if __name__ == "__main__":
