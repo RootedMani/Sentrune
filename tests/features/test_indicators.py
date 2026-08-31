@@ -5,7 +5,6 @@ import pytest
 pdta = pytest.importorskip("pandas_ta")
 from trading_assistant.features.technical.indicators import compute_indicators
 
-
 def test_indicator_columns_and_warmup_values():
     values = pd.Series(range(1, 221), dtype=float)
     frame = pd.DataFrame({"open": values, "high": values + 1, "low": values - 1, "close": values, "volume": 100.0})
@@ -15,12 +14,7 @@ def test_indicator_columns_and_warmup_values():
     assert result.iloc[199]["sma_200"] == pytest.approx(100.5)
     assert result.iloc[-1]["ema_12"] > result.iloc[-2]["ema_12"]
 
-
 def _realistic_ohlcv_frame(n=250, seed=0):
-    """A wiggly (not monotonic) synthetic series - ADX/ichimoku/candle
-    patterns need actual up/down movement to produce non-degenerate values,
-    unlike the strictly increasing fixture above. high/low are built to
-    always bracket both open and close, as any real OHLC bar must."""
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2023-01-01", periods=n, freq="D", tz="UTC")
     close = pd.Series(100 + np.cumsum(rng.normal(0, 1, n)), index=dates)
@@ -32,14 +26,7 @@ def _realistic_ohlcv_frame(n=250, seed=0):
     volume = pd.Series(rng.uniform(1000, 5000, n), index=dates)
     return pd.DataFrame({"open": open_, "high": high, "low": low, "close": close, "volume": volume})
 
-
 class TestNewlyAddedIndicators:
-    """Regression coverage for the indicators that were listed in
-    modeling/compute.py's TECHNICAL_FEATURES and features/db's
-    ensure_columns but were never actually computed - every row silently
-    stayed NULL until these branches were added. These pin down that each
-    configured indicator name produces real (non-entirely-NaN) values."""
-
     def test_adx_produces_real_post_warmup_values(self):
         frame = _realistic_ohlcv_frame()
         result = compute_indicators(frame, ["adx"])
@@ -53,12 +40,6 @@ class TestNewlyAddedIndicators:
         for col in ("ichimoku_tenkan", "ichimoku_kijun", "ichimoku_senkou_a", "ichimoku_senkou_b", "ichimoku_chikou"):
             assert col in result.columns
             assert result[col].notna().sum() > 0, f"{col} was never computed (all-NaN)"
-        # Chikou is a lagging span (close shifted backward): by construction
-        # the most recent rows must be NaN. This is the exact property that
-        # makes it unusable as a live-prediction feature (see
-        # modeling/compute.py's TECHNICAL_FEATURES comment) - pinned here so
-        # a future change doesn't accidentally "fix" it into a leaking
-        # forward-looking feature instead.
         assert result["ichimoku_chikou"].iloc[-5:].isna().all()
 
     def test_candle_patterns_are_binary_and_not_all_zero(self):
@@ -76,7 +57,20 @@ class TestNewlyAddedIndicators:
         for col in ("volatility_20", "return_autocorr_20", "volume_price_divergence"):
             assert col in result.columns
             assert result[col].notna().sum() > 0, f"{col} was never computed (all-NaN)"
-        # Correlation/autocorrelation-based features must stay in [-1, 1].
         assert result["return_autocorr_20"].dropna().between(-1.0001, 1.0001).all()
         assert result["volume_price_divergence"].dropna().between(-1.0001, 1.0001).all()
 
+# FIX: New regression test for short-frame ichimoku graceful degradation
+def test_ichimoku_short_frame_graceful_degradation():
+    """Regression test: short OHLCV frames (e.g., 20-30 bars) cause pandas-ta's 
+    ichimoku to return a tuple where historical is None. This should not crash."""
+    values = pd.Series(range(1, 26), dtype=float)
+    frame = pd.DataFrame({"open": values, "high": values + 1, "low": values - 1, "close": values, "volume": 100.0})
+    
+    # This should NOT raise TypeError: 'NoneType' object is not subscriptable
+    result = compute_indicators(frame, ["ichimoku"])
+    
+    # Columns should be present but all-NaN
+    for col in ("ichimoku_tenkan", "ichimoku_kijun", "ichimoku_senkou_a", "ichimoku_senkou_b", "ichimoku_chikou"):
+        assert col in result.columns
+        assert result[col].isna().all(), f"{col} should be all-NaN for short frame, got {result[col].tolist()}"

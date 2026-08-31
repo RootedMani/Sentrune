@@ -1,11 +1,11 @@
 from __future__ import annotations
-
 import logging
+import random
+import time
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import urlencode, urlparse
 import xml.etree.ElementTree as ET
-
 import requests
 
 log = logging.getLogger(__name__)
@@ -15,13 +15,32 @@ _RSS_HEADERS = {
     "Accept": "application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.1",
 }
 
-
 def _fetch_items(symbol: str, name: str) -> list[ET.Element]:
     query = f'"{symbol}" {name} market'
     params = {"q": query, "hl": "en-US", "gl": "US", "ceid": "US:en"}
     url = "https://news.google.com/rss/search?" + urlencode(params)
-    response = requests.get(url, timeout=20, headers=_RSS_HEADERS, allow_redirects=True)
-    response.raise_for_status()
+    
+    # FIX: Add retry-with-backoff for transient 503s
+    max_retries = 3
+    response = None
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, timeout=20, headers=_RSS_HEADERS, allow_redirects=True)
+            response.raise_for_status()
+            break  # Success
+        except requests.RequestException as exc:
+            if attempt == max_retries - 1:
+                raise  # Re-raise on last attempt
+            sleep_time = (2 ** attempt) + random.uniform(0, 1)
+            log.warning(
+                "Google News RSS fetch attempt %d failed for %s: %s. Retrying in %.1fs...",
+                attempt + 1, symbol, exc, sleep_time
+            )
+            time.sleep(sleep_time)
+            
+    if response is None:
+        raise requests.RequestException("Failed to fetch after retries")
+
     try:
         root = ET.fromstring(response.content)
     except ET.ParseError:
@@ -30,6 +49,7 @@ def _fetch_items(symbol: str, name: str) -> list[ET.Element]:
             symbol, response.status_code, response.url, response.headers.get("content-type"), response.text[:300],
         )
         raise
+        
     items = root.findall("./channel/item")
     if not items:
         log.warning(
@@ -38,8 +58,8 @@ def _fetch_items(symbol: str, name: str) -> list[ET.Element]:
         )
     elif urlparse(response.url).hostname not in {"news.google.com", "www.news.google.com"}:
         log.warning("Google News RSS followed a redirect for %s to %s", symbol, response.url)
+        
     return items
-
 
 def _published(value: str | None) -> str:
     if not value:
@@ -49,14 +69,7 @@ def _published(value: str | None) -> str:
     except (TypeError, ValueError, OverflowError):
         return value
 
-
 def fetch(assets: list[dict], start: datetime | None = None, limit: int = 20) -> list[dict]:
-    """Fetch public Google News RSS results for each configured asset.
-
-    This is a lightweight market-discussion fallback that needs no API key. It
-    keeps the article URL and publisher attribution, and marks the queried
-    asset explicitly so the existing social junction logic links it reliably.
-    """
     rows: list[dict] = []
     for asset in assets:
         symbol = str(asset["symbol"]).upper()
@@ -96,11 +109,8 @@ def fetch(assets: list[dict], start: datetime | None = None, limit: int = 20) ->
             log.warning("Google News RSS fetch failed for %s: %s", symbol, exc)
     return rows
 
-
 def fetch_news(assets: list[dict], start: datetime | None = None, limit: int = 20) -> list[dict]:
-    """Fetch the same public RSS results using the news-table contract."""
     from ..normalize.news_items import normalize_news
-
     rows: list[dict] = []
     for asset in assets:
         symbol = str(asset["symbol"]).upper()

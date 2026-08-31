@@ -61,5 +61,6 @@ src/trading_assistant/modeling/strategy/rules.py
 src/trading_assistant/modeling/tuning/__init__.py
 src/trading_assistant/modeling/tuning/search.py
 src/trading_assistant/modeling/validation/__init__.py
+src/trading_assistant/modeling/validation/calibration.py
 src/trading_assistant/modeling/validation/importance.py
 src/trading_assistant/modeling/validation/walk_forward.py
