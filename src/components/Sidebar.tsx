@@ -241,7 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
-                  {inv}
+                  {language === 'fa' ? toPersianDigits(inv) : inv}
                 </button>
               ))}
             </div>

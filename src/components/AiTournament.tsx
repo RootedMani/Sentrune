@@ -42,7 +42,7 @@ export const AiTournament: React.FC<AiTournamentProps> = ({
   isLoading,
   onRunTournament,
 }) => {
-  const { language, t, isRtl, toPersianDigits, formatNumber, formatPercent, formatCurrency } = useLanguage();
+  const { language, t, isRtl, toPersianDigits, formatDigits, formatNumber, formatPercent, formatCurrency } = useLanguage();
   const { isDark } = useTheme();
   const [expandedModelId, setExpandedModelId] = useState<string | null>(null);
   const [activeReasoningLang, setActiveReasoningLang] = useState<'fa' | 'en'>(language);

@@ -51,7 +51,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   technicals = [],
   sentimentAggs = [],
 }) => {
-  const { t, language, isRtl, toPersianDigits, formatCurrency, formatPercent } = useLanguage();
+  const { t, language, isRtl, toPersianDigits, formatCurrency, formatPercent, formatNumber } = useLanguage();
 
   const isPositive = priceChange >= 0;
 
@@ -169,11 +169,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 }`}
                 dir="ltr"
               >
-                {isPositive ? '+' : ''}
-                {formatPercent(priceChangePct, 2, false)}
+                {formatPercent(priceChangePct, 2, true)}
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono" dir="ltr">
-                ({isPositive ? '+' : ''}{formatCurrency(priceChange, 2)})
+                ({formatCurrency(priceChange, 2, true)})
               </span>
             </div>
           </div>
@@ -194,7 +193,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
           <div className="mt-3">
             <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono" dir="ltr">
-              {totalVolume > 0 ? (totalVolume > 1e6 ? `${(totalVolume / 1e6).toFixed(2)}M` : `${(totalVolume / 1e3).toFixed(1)}K`) : 'High Flow'}
+              {totalVolume > 0
+                ? totalVolume > 1e6
+                  ? `${formatNumber(totalVolume / 1e6, { decimals: 2 })}M`
+                  : `${formatNumber(totalVolume / 1e3, { decimals: 1 })}K`
+                : (language === 'fa' ? 'جریان نقدینگی بالا' : 'High Flow')}
             </p>
             <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-600 dark:text-slate-400">
               <span className="w-2 h-2 rounded-full bg-blue-500" />
@@ -219,7 +222,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
               <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono" dir="ltr">
-                {toPersianDigits(sentimentPositivePct)}%
+                {formatPercent(sentimentPositivePct, 0, false)}
               </p>
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                 {sentimentPositivePct >= 55 ? (language === 'fa' ? 'صعودی / مثبت' : 'Bullish') : (language === 'fa' ? 'خنثی' : 'Neutral')}
@@ -252,7 +255,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   : (language === 'fa' ? 'صعودی' : 'Bullish')}
               </p>
               <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                ({toPersianDigits(prediction ? Math.round(prediction.confidence * 100) : 74)}% {language === 'fa' ? 'اطمینان' : 'conf'})
+                ({formatPercent(prediction ? Math.round(prediction.confidence * 100) : 74, 0, false)} {language === 'fa' ? 'اطمینان' : 'conf'})
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
@@ -342,7 +345,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
             <span className="text-[11px] text-slate-500 dark:text-slate-400 block">{language === 'fa' ? 'شاخص قدرت نسبی (RSI)' : 'RSI Momentum (14)'}</span>
             <span className={`text-xs font-bold mt-0.5 block font-mono ${rsiValue > 70 ? 'text-amber-500' : rsiValue < 30 ? 'text-blue-500' : 'text-emerald-500'}`}>
-              {toPersianDigits(rsiValue.toFixed(1))} {rsiValue > 70 ? (language === 'fa' ? '(اشباع خرید)' : '(Overbought)') : rsiValue < 30 ? (language === 'fa' ? '(اشباع فروش)' : '(Oversold)') : (language === 'fa' ? '(متعادل)' : '(Neutral)')}
+              {formatNumber(rsiValue, { decimals: 1 })} {rsiValue > 70 ? (language === 'fa' ? '(اشباع خرید)' : '(Overbought)') : rsiValue < 30 ? (language === 'fa' ? '(اشباع فروش)' : '(Oversold)') : (language === 'fa' ? '(متعادل)' : '(Neutral)')}
             </span>
           </div>
         </div>

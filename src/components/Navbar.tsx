@@ -50,7 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setMobileMenuOpen,
 }) => {
   const { isDark, toggleTheme } = useTheme();
-  const { language, toggleLanguage, t, isRtl } = useLanguage();
+  const { language, toggleLanguage, t, isRtl, formatCurrency, formatNumber, formatPercent, toPersianDigits } = useLanguage();
 
   const tabs = [
     {
@@ -137,7 +137,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono font-medium rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0"
                 dir="ltr"
               >
-                {selectedAsset?.exchange} · {selectedInterval}
+                {selectedAsset?.exchange} · {language === 'fa' ? toPersianDigits(selectedInterval) : selectedInterval}
               </span>
             </div>
 
@@ -150,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 dir="ltr"
               >
                 <span className="text-sm sm:text-base font-bold font-mono text-slate-900 dark:text-slate-100">
-                  ${lastClose.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                  {formatCurrency(lastClose, lastClose > 10 ? 2 : 4)}
                 </span>
                 <span
                   className={`inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
@@ -161,9 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   <span>
-                    {isPositive ? '+' : ''}
-                    {priceChange.toFixed(2)} ({isPositive ? '+' : ''}
-                    {priceChangePct.toFixed(2)}%)
+                    {formatNumber(priceChange, { decimals: 2, showSign: true })} ({formatPercent(priceChangePct, 2, true)})
                   </span>
                 </span>
               </div>

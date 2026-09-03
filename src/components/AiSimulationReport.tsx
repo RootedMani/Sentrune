@@ -278,7 +278,9 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
               {formatPercent(sim.winRatePct, 1, false)}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-              {toPersianDigits(sim.winningTrades)}W / {toPersianDigits(sim.losingTrades)}L ({toPersianDigits(sim.totalTrades)} {language === 'fa' ? 'معامله' : 'trades'})
+              {language === 'fa'
+                ? `${toPersianDigits(sim.winningTrades)}W / ${toPersianDigits(sim.losingTrades)}L (${toPersianDigits(sim.totalTrades)} معامله)`
+                : `${sim.winningTrades}W / ${sim.losingTrades}L (${sim.totalTrades} trades)`}
             </div>
           </div>
 
@@ -366,7 +368,7 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
                       <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-bold ${
                         idx === 0 ? 'bg-amber-500 text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}>
-                        #{toPersianDigits(idx + 1)}
+                        #{language === 'fa' ? toPersianDigits(idx + 1) : idx + 1}
                       </span>
                       <span>{res.modelName}</span>
                       {idx === 0 && (
@@ -444,7 +446,7 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
                   domain={['auto', 'auto']}
                   stroke={isDark ? '#94a3b8' : '#64748b'}
                   fontSize={10}
-                  tickFormatter={(val) => `$${(val / 1000).toFixed(1)}k`}
+                  tickFormatter={(val) => `$${formatNumber(val / 1000, { decimals: 1 })}k`}
                 />
                 <Tooltip
                   content={({ active, payload }) => {
@@ -465,11 +467,11 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
                           </div>
                           <div className="flex justify-between gap-4 text-slate-400">
                             <span>Asset Price:</span>
-                            <span>${data.price.toFixed(2)}</span>
+                            <span>{formatCurrency(data.price, 2)}</span>
                           </div>
                           <div className="flex justify-between gap-4 text-rose-400">
                             <span>Drawdown:</span>
-                            <span>{data.drawdownPct.toFixed(1)}%</span>
+                            <span>{formatPercent(data.drawdownPct, 1, false)}</span>
                           </div>
                           {data.action && (
                             <div className="pt-1 mt-1 border-t border-slate-800 text-amber-400 font-bold flex items-center gap-1">
@@ -518,7 +520,7 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {language === 'fa'
-                  ? `${sim.trades.length} معامله ثبت شده همراه با دلیل ورود/خروج و سود تحقق‌یافته`
+                  ? `${toPersianDigits(sim.trades.length)} معامله ثبت شده همراه با دلیل ورود/خروج و سود تحقق‌یافته`
                   : `${sim.trades.length} trades executed with explicit rationale and realized P&L records`}
               </p>
             </div>
@@ -588,7 +590,7 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
                           className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                         >
                           <td className="p-3 font-mono font-medium text-slate-900 dark:text-slate-100">
-                            <div>{toPersianDigits(trade.id)}</div>
+                            <div>{language === 'fa' ? toPersianDigits(trade.id) : trade.id}</div>
                             <div className="text-[10px] text-slate-400">{trade.timestamp.split('T')[0]}</div>
                           </td>
                           <td className="p-3">
@@ -607,7 +609,7 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
                             {formatUsd(trade.price)}
                           </td>
                           <td className="p-3 text-right font-mono text-slate-600 dark:text-slate-300">
-                            {toPersianDigits(trade.shares)}
+                            {language === 'fa' ? toPersianDigits(trade.shares) : trade.shares}
                           </td>
                           <td className="p-3 text-right font-mono text-slate-600 dark:text-slate-300">
                             <div>{formatUsd(trade.tradeCost)}</div>
@@ -767,7 +769,7 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
                   <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-between items-center">
                     <span className="text-slate-500">{language === 'fa' ? 'نرخ برد:' : 'Win Rate:'}</span>
                     <span className="font-mono font-bold">
-                      {formatPercent(sim.winRatePct, 1, false)} ({toPersianDigits(sim.winningTrades)}/{toPersianDigits(sim.totalTrades)})
+                      {formatPercent(sim.winRatePct, 1, false)} ({language === 'fa' ? `${toPersianDigits(sim.winningTrades)}/${toPersianDigits(sim.totalTrades)}` : `${sim.winningTrades}/${sim.totalTrades}`})
                     </span>
                   </div>
                   <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-between items-center">

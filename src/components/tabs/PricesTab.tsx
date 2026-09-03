@@ -47,7 +47,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
   changePct,
 }) => {
   const { isDark } = useTheme();
-  const { t, language, isRtl } = useLanguage();
+  const { t, language, isRtl, formatCurrency, formatNumber, formatPercent, toPersianDigits } = useLanguage();
   const [showRawBars, setShowRawBars] = useState(false);
   const [timeframe, setTimeframe] = useState<'1W' | '1M' | '3M' | 'ALL'>('ALL');
   const [chartView, setChartView] = useState<'area' | 'bar'>('area');
@@ -162,7 +162,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
           </span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold text-slate-900 dark:text-slate-100 font-mono" dir="ltr">
-              ${lastClose.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+              {formatCurrency(lastClose, lastClose > 10 ? 2 : 4)}
             </span>
             <div
               className={`flex items-center gap-1 text-sm font-semibold font-mono px-2.5 py-0.5 rounded-lg ${
@@ -174,9 +174,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
             >
               {isPositive ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
               <span>
-                {isPositive ? '+' : ''}
-                {change.toFixed(2)} ({isPositive ? '+' : ''}
-                {changePct.toFixed(2)}%)
+                {formatNumber(change, { decimals: 2, showSign: true })} ({formatPercent(changePct, 2, true)})
               </span>
             </div>
           </div>
@@ -223,7 +221,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
             {t('metric_period_high')}
           </p>
           <p className="text-base font-bold font-mono text-slate-900 dark:text-slate-100 mt-0.5" dir="ltr">
-            ${stats.high.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatCurrency(stats.high, 2)}
           </p>
         </div>
         <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs">
@@ -231,7 +229,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
             {t('metric_period_low')}
           </p>
           <p className="text-base font-bold font-mono text-slate-900 dark:text-slate-100 mt-0.5" dir="ltr">
-            ${stats.low.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatCurrency(stats.low, 2)}
           </p>
         </div>
         <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs">
@@ -246,8 +244,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
             }`}
             dir="ltr"
           >
-            {isPeriodPositive ? '+' : ''}
-            {stats.periodReturn.toFixed(2)}%
+            {formatPercent(stats.periodReturn, 2, true)}
           </p>
         </div>
         <div className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xs">
@@ -255,7 +252,9 @@ export const PricesTab: React.FC<PricesTabProps> = ({
             {t('metric_avg_volume')}
           </p>
           <p className="text-base font-bold font-mono text-slate-900 dark:text-slate-100 mt-0.5" dir="ltr">
-            {(stats.avgVol / 1000000).toFixed(2)}M
+            {stats.avgVol > 1e6
+              ? `${formatNumber(stats.avgVol / 1e6, { decimals: 2 })}M`
+              : `${formatNumber(stats.avgVol / 1e3, { decimals: 1 })}K`}
           </p>
         </div>
       </div>
@@ -313,7 +312,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                     }}
                     formatter={(value: any) => [
-                      `$${Number(value).toFixed(2)}`,
+                      formatCurrency(Number(value), 2),
                       t('legend_close'),
                     ]}
                   />
@@ -365,7 +364,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
                       color: isDark ? '#f8fafc' : '#0f172a',
                     }}
                     formatter={(value: any) => [
-                      Number(value).toLocaleString(),
+                      formatNumber(Number(value), { decimals: 0 }),
                       t('table_volume'),
                     ]}
                   />
@@ -384,7 +383,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
               <div className="flex items-center gap-2">
                 <Table className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {language === 'fa' ? 'مشاهده جدول ردیف‌های OHLCV' : 'Inspect Raw OHLCV Price Records'} ({filteredBars.length})
+                  {language === 'fa' ? 'مشاهده جدول ردیف‌های OHLCV' : 'Inspect Raw OHLCV Price Records'} ({language === 'fa' ? toPersianDigits(filteredBars.length) : filteredBars.length})
                 </h3>
               </div>
               <ChevronDown
@@ -408,7 +407,7 @@ export const PricesTab: React.FC<PricesTabProps> = ({
                     />
                   </div>
                   <span className="text-xs font-mono text-slate-500 dark:text-slate-400" dir="ltr">
-                    {tableBars.length} records
+                    {language === 'fa' ? `${toPersianDigits(tableBars.length)} ردیف` : `${tableBars.length} records`}
                   </span>
                 </div>
 
@@ -432,19 +431,19 @@ export const PricesTab: React.FC<PricesTabProps> = ({
                         .map((b) => (
                           <tr key={b.id} className="hover:bg-slate-100/50 dark:hover:bg-slate-800/40">
                             <td className="py-2 px-2 text-slate-500 dark:text-slate-400" dir="ltr">
-                              {b.timestamp.slice(0, 10)}
+                              {language === 'fa' ? toPersianDigits(b.timestamp.slice(0, 10)) : b.timestamp.slice(0, 10)}
                             </td>
-                            <td className="py-2 px-2" dir="ltr">${b.open.toFixed(2)}</td>
+                            <td className="py-2 px-2" dir="ltr">{formatCurrency(b.open, 2)}</td>
                             <td className="py-2 px-2 text-emerald-600 dark:text-emerald-400" dir="ltr">
-                              ${b.high.toFixed(2)}
+                              {formatCurrency(b.high, 2)}
                             </td>
                             <td className="py-2 px-2 text-rose-600 dark:text-rose-400" dir="ltr">
-                              ${b.low.toFixed(2)}
+                              {formatCurrency(b.low, 2)}
                             </td>
                             <td className="py-2 px-2 font-bold text-slate-900 dark:text-slate-100" dir="ltr">
-                              ${b.close.toFixed(2)}
+                              {formatCurrency(b.close, 2)}
                             </td>
-                            <td className="py-2 px-2" dir="ltr">{b.volume.toLocaleString()}</td>
+                            <td className="py-2 px-2" dir="ltr">{formatNumber(b.volume, { decimals: 0 })}</td>
                             <td className="py-2 px-2 text-cyan-600 dark:text-cyan-400">
                               {b.source}
                             </td>

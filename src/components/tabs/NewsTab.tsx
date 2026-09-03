@@ -29,7 +29,7 @@ interface NewsTabProps {
 
 export const NewsTab: React.FC<NewsTabProps> = ({ news, symbol, onRefresh, isRefreshing }) => {
   const { isDark } = useTheme();
-  const { t, language, isRtl } = useLanguage();
+  const { t, language, isRtl, formatNumber, toPersianDigits, formatDate } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSource, setSelectedSource] = useState<string>('all');
   const [selectedSentiment, setSelectedSentiment] = useState<string>('all');
@@ -137,7 +137,7 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, symbol, onRefresh, isRef
               className="px-2.5 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-lg text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-cyan-500"
             >
               <option value="all">
-                {language === 'fa' ? `همه منابع (${news.length})` : `All Sources (${news.length})`}
+                {language === 'fa' ? `همه منابع (${toPersianDigits(news.length)})` : `All Sources (${news.length})`}
               </option>
               {sources.map((s) => (
                 <option key={s} value={s}>
@@ -201,12 +201,7 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, symbol, onRefresh, isRef
                     </span>
                     <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono" dir="ltr">
                       <Calendar className="w-3 h-3" />
-                      {new Date(item.published_at).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatDate(item.published_at)}
                     </span>
 
                     {isTranslatedToFa && (
@@ -228,7 +223,7 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, symbol, onRefresh, isRef
                   >
                     {isPos ? <TrendingUp className="w-3 h-3" /> : isNeg ? <TrendingDown className="w-3 h-3" /> : null}
                     <span>{sentimentLabel}</span>
-                    <span dir="ltr">({item.raw_sentiment ? (item.raw_sentiment > 0 ? '+' : '') + item.raw_sentiment.toFixed(2) : '0.00'})</span>
+                    <span dir="ltr">({formatNumber(item.raw_sentiment || 0, { decimals: 2, showSign: true })})</span>
                   </span>
                 </div>
 

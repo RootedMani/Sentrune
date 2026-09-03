@@ -45,7 +45,7 @@ export const TechnicalsTab: React.FC<TechnicalsTabProps> = ({
   symbol,
 }) => {
   const { isDark } = useTheme();
-  const { t, language, isRtl } = useLanguage();
+  const { t, language, isRtl, formatCurrency, formatNumber, toPersianDigits } = useLanguage();
   const [showRawTechnicals, setShowRawTechnicals] = useState(false);
   const [showGuide, setShowGuide] = useState(true);
 
@@ -188,10 +188,10 @@ export const TechnicalsTab: React.FC<TechnicalsTabProps> = ({
             </span>
           </div>
           <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100 mt-2" dir="ltr">
-            ${latest?.sma_20?.toFixed(2) || 'N/A'}
+            {latest?.sma_20 !== null && latest?.sma_20 !== undefined ? formatCurrency(latest.sma_20, 2) : 'N/A'}
           </p>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-            {t('table_close')}: ${latestBar?.close?.toFixed(2) || 'N/A'}
+            {t('table_close')}: {latestBar?.close !== null && latestBar?.close !== undefined ? formatCurrency(latestBar.close, 2) : 'N/A'}
           </p>
         </div>
 
@@ -217,7 +217,7 @@ export const TechnicalsTab: React.FC<TechnicalsTabProps> = ({
             </span>
           </div>
           <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100 mt-2" dir="ltr">
-            {latest?.rsi_14?.toFixed(1) || 'N/A'}
+            {latest?.rsi_14 !== null && latest?.rsi_14 !== undefined ? formatNumber(latest.rsi_14, { decimals: 1 }) : 'N/A'}
           </p>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             {language === 'fa' ? 'شاخص قدرت نسبی' : 'Relative Strength Index'}
@@ -243,7 +243,7 @@ export const TechnicalsTab: React.FC<TechnicalsTabProps> = ({
           </div>
           <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100 mt-2" dir="ltr">
             {latest?.macd_histogram !== null && latest?.macd_histogram !== undefined
-              ? (latest.macd_histogram > 0 ? '+' : '') + latest.macd_histogram.toFixed(2)
+              ? formatNumber(latest.macd_histogram, { decimals: 2, showSign: true })
               : 'N/A'}
           </p>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -261,7 +261,7 @@ export const TechnicalsTab: React.FC<TechnicalsTabProps> = ({
             </span>
           </div>
           <p className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100 mt-2" dir="ltr">
-            ${latest?.atr_14?.toFixed(2) || 'N/A'}
+            {latest?.atr_14 !== null && latest?.atr_14 !== undefined ? formatCurrency(latest.atr_14, 2) : 'N/A'}
           </p>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
             {language === 'fa' ? 'میانگین دامنه نوسان روزانه' : 'Average Daily Expected Range'}
@@ -350,7 +350,7 @@ export const TechnicalsTab: React.FC<TechnicalsTabProps> = ({
                   fontSize: '12px',
                   color: isDark ? '#f8fafc' : '#0f172a',
                 }}
-                formatter={(val: any) => [Number(val).toFixed(2), 'RSI(14)']}
+                formatter={(val: any) => [formatNumber(Number(val), { decimals: 2 }), 'RSI(14)']}
               />
               <ReferenceLine y={70} stroke="#f43f5e" strokeDasharray="3 3" label={{ value: '70 Overbought', fill: '#f43f5e', fontSize: 10 }} />
               <ReferenceLine y={30} stroke="#10b981" strokeDasharray="3 3" label={{ value: '30 Oversold', fill: '#10b981', fontSize: 10 }} />

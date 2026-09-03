@@ -48,7 +48,7 @@ export const SentimentTab: React.FC<SentimentTabProps> = ({
   symbol,
 }) => {
   const { isDark } = useTheme();
-  const { t, language, isRtl } = useLanguage();
+  const { t, language, isRtl, formatNumber, toPersianDigits } = useLanguage();
   const [showRawAggregates, setShowRawAggregates] = useState(false);
 
   const filteredAggregates = aggregates.filter(
@@ -155,10 +155,11 @@ export const SentimentTab: React.FC<SentimentTabProps> = ({
               }`}
               dir="ltr"
             >
-              {sentimentScore > 0 ? '+' : ''}
-              {sentimentScore.toFixed(3)}
+              {formatNumber(sentimentScore, { decimals: 3, showSign: true })}
             </span>
-            <span className="text-xs text-slate-400 font-mono" dir="ltr">[-1.0 to +1.0]</span>
+            <span className="text-xs text-slate-400 font-mono" dir="ltr">
+              [{language === 'fa' ? '-۱.۰ تا +۱.۰' : '-1.0 to +1.0'}]
+            </span>
           </div>
 
           {/* Meter Bar */}
@@ -182,15 +183,17 @@ export const SentimentTab: React.FC<SentimentTabProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-slate-600 dark:text-slate-400">{language === 'fa' ? 'معامله‌گران میزهای تخصصی:' : 'Followed Desk Traders:'}</span>
               <span className="font-mono font-bold text-cyan-600 dark:text-cyan-400" dir="ltr">
-                {latestAgg?.followed_avg_sentiment !== undefined && latestAgg?.followed_avg_sentiment > 0 ? '+' : ''}
-                {latestAgg?.followed_avg_sentiment?.toFixed(3) || 'N/A'}
+                {latestAgg?.followed_avg_sentiment !== undefined && latestAgg?.followed_avg_sentiment !== null
+                  ? formatNumber(latestAgg.followed_avg_sentiment, { decimals: 3, showSign: true })
+                  : 'N/A'}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-600 dark:text-slate-400">{language === 'fa' ? 'معامله‌گران خرد و عمومی:' : 'Unattributed / Retail:'}</span>
               <span className="font-mono font-bold text-slate-700 dark:text-slate-300" dir="ltr">
-                {latestAgg?.unattributed_avg_sentiment !== undefined && latestAgg?.unattributed_avg_sentiment > 0 ? '+' : ''}
-                {latestAgg?.unattributed_avg_sentiment?.toFixed(3) || 'N/A'}
+                {latestAgg?.unattributed_avg_sentiment !== undefined && latestAgg?.unattributed_avg_sentiment !== null
+                  ? formatNumber(latestAgg.unattributed_avg_sentiment, { decimals: 3, showSign: true })
+                  : 'N/A'}
               </span>
             </div>
           </div>
@@ -206,13 +209,15 @@ export const SentimentTab: React.FC<SentimentTabProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-slate-600 dark:text-slate-400">{language === 'fa' ? 'کل پیام‌های اشاره‌شده:' : 'Total Mention Volume:'}</span>
               <span className="font-mono font-bold text-slate-900 dark:text-slate-100" dir="ltr">
-                {latestAgg?.mention_volume ?? 0} {language === 'fa' ? 'پیام / بازه' : 'mentions / window'}
+                {formatNumber(latestAgg?.mention_volume ?? 0, { decimals: 0 })} {language === 'fa' ? 'پیام / بازه' : 'mentions / window'}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-slate-600 dark:text-slate-400">{language === 'fa' ? 'نوسان احساسات:' : 'Sentiment Volatility:'}</span>
               <span className="font-mono font-bold text-slate-700 dark:text-slate-300" dir="ltr">
-                {latestAgg?.sentiment_volatility?.toFixed(3) || 'N/A'}
+                {latestAgg?.sentiment_volatility !== undefined && latestAgg?.sentiment_volatility !== null
+                  ? formatNumber(latestAgg.sentiment_volatility, { decimals: 3 })
+                  : 'N/A'}
               </span>
             </div>
           </div>
@@ -223,7 +228,7 @@ export const SentimentTab: React.FC<SentimentTabProps> = ({
       <div className="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2 shadow-xs">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-            {language === 'fa' ? `مسیر قطبیت احساسات (بازه غلتان ${selectedWindow} ساعته)` : `Sentiment Polarity Trajectory (${selectedWindow}h Rolling)`}
+            {language === 'fa' ? `مسیر قطبیت احساسات (بازه غلتان ${toPersianDigits(selectedWindow)} ساعته)` : `Sentiment Polarity Trajectory (${selectedWindow}h Rolling)`}
           </h3>
           <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
             {language === 'fa' ? 'منحنی احساسات تلفیقی' : 'Composite Sentiment Curve'}

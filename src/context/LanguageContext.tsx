@@ -570,6 +570,16 @@ const enTranslations: Translations = {
   feature_selection_label: 'Feature Selection',
 };
 
+export const toEnglishDigits = (input: string | number | null | undefined): string => {
+  if (input === null || input === undefined) return '';
+  const str = String(input);
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+  return str
+    .replace(/[۰-۹]/g, (w) => String(persianDigits.indexOf(w)))
+    .replace(/[٠-٩]/g, (w) => String(arabicDigits.indexOf(w)));
+};
+
 export const toPersianDigits = (input: string | number | null | undefined): string => {
   if (input === null || input === undefined) return '';
   const str = String(input);
@@ -611,6 +621,8 @@ export const formatLocalizedNumber = (
   if (language === 'fa') {
     formatted = formatted.replace(/,/g, '٬').replace(/\./g, '٫');
     formatted = toPersianDigits(formatted);
+  } else {
+    formatted = toEnglishDigits(formatted);
   }
 
   if (options?.prefix) {
@@ -630,6 +642,7 @@ export interface LanguageContextType {
   t: (key: string, defaultText?: string) => string;
   isRtl: boolean;
   toPersianDigits: (input: string | number | null | undefined) => string;
+  formatDigits: (input: string | number | null | undefined) => string;
   formatNumber: (
     num: number | string | null | undefined,
     options?: {
@@ -640,7 +653,7 @@ export interface LanguageContextType {
       useGrouping?: boolean;
     }
   ) => string;
-  formatCurrency: (num: number | string | null | undefined, decimals?: number) => string;
+  formatCurrency: (num: number | string | null | undefined, decimals?: number, showSign?: boolean) => string;
   formatPercent: (num: number | string | null | undefined, decimals?: number, showSign?: boolean) => string;
   formatDate: (dateInput: string | number | Date | null | undefined) => string;
   formatRelativeTime: (timeMs: number) => string;
@@ -692,8 +705,16 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let text = dict[key] || enTranslations[key] || defaultText || key;
     if (language === 'fa') {
       text = toPersianDigits(text);
+    } else {
+      text = toEnglishDigits(text);
     }
     return text;
+  };
+
+  const formatDigits = (input: string | number | null | undefined): string => {
+    if (input === null || input === undefined) return '';
+    const str = String(input);
+    return language === 'fa' ? toPersianDigits(str) : toEnglishDigits(str);
   };
 
   const formatNumber = (
@@ -707,11 +728,23 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   ): string => formatLocalizedNumber(num, language, options);
 
-  const formatCurrency = (num: number | string | null | undefined, decimals = 2): string => {
+  const formatCurrency = (
+    num: number | string | null | undefined,
+    decimals = 2,
+    showSign = false
+  ): string => {
     if (num === null || num === undefined || num === '') return '—';
-    const valStr = formatLocalizedNumber(num, language, { decimals });
-    if (language === 'fa') {
-      return `$${valStr}`;
+    const val = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(val)) return String(num);
+    const isNeg = val < 0;
+    const absVal = Math.abs(val);
+    const valStr = formatLocalizedNumber(absVal, language, { decimals });
+
+    if (isNeg) {
+      return `-$${valStr}`;
+    }
+    if (showSign && val > 0) {
+      return `+$${valStr}`;
     }
     return `$${valStr}`;
   };
@@ -765,7 +798,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toggleLanguage,
         t,
         isRtl,
-        toPersianDigits,
+        toPersianDigits: formatDigits,
+        formatDigits,
         formatNumber,
         formatCurrency,
         formatPercent,
