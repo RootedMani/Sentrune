@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { RealtimeIndicator } from './RealtimeIndicator';
+import { RealtimeConnectionStatus } from '../types';
 
 interface NavbarProps {
   activeTab: string;
@@ -34,6 +36,11 @@ interface NavbarProps {
   onRefresh: () => Promise<void>;
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
+  connectionStatus?: RealtimeConnectionStatus;
+  isInitialSyncing?: boolean;
+  initialSyncDone?: boolean;
+  lastTickTime?: number;
+  priceFlash?: 'up' | 'down' | null;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -48,6 +55,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRefresh,
   mobileMenuOpen,
   setMobileMenuOpen,
+  connectionStatus = 'connected',
+  isInitialSyncing = false,
+  initialSyncDone = true,
+  lastTickTime = Date.now(),
+  priceFlash = null,
 }) => {
   const { isDark, toggleTheme } = useTheme();
   const { language, toggleLanguage, t, isRtl, formatCurrency, formatNumber, formatPercent, toPersianDigits } = useLanguage();
@@ -146,10 +158,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div
                 className={`flex items-center gap-2 ${
                   isRtl ? 'pr-3 border-r' : 'pl-3 border-l'
-                } border-slate-200 dark:border-slate-700/80 shrink-0`}
+                } border-slate-200 dark:border-slate-700/80 shrink-0 transition-colors duration-300 ${
+                  priceFlash === 'up'
+                    ? 'ring-2 ring-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/40 rounded-lg px-2 py-0.5'
+                    : priceFlash === 'down'
+                    ? 'ring-2 ring-rose-500/50 bg-rose-50/50 dark:bg-rose-950/40 rounded-lg px-2 py-0.5'
+                    : ''
+                }`}
                 dir="ltr"
               >
-                <span className="text-sm sm:text-base font-bold font-mono text-slate-900 dark:text-slate-100">
+                <span className={`text-sm sm:text-base font-bold font-mono transition-colors duration-200 ${
+                  priceFlash === 'up'
+                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
+                    : priceFlash === 'down'
+                    ? 'text-rose-600 dark:text-rose-400 font-extrabold'
+                    : 'text-slate-900 dark:text-slate-100'
+                }`}>
                   {formatCurrency(lastClose, lastClose > 10 ? 2 : 4)}
                 </span>
                 <span
@@ -169,14 +193,24 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Refresh, Language, and Theme Switcher */}
+        {/* Right Side: Real-Time Indicator, Refresh, Language, and Theme Switcher */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Real-time streaming status indicator */}
+          <RealtimeIndicator
+            connectionStatus={connectionStatus}
+            isInitialSyncing={isInitialSyncing}
+            initialSyncDone={initialSyncDone}
+            isRefreshing={isRefreshing}
+            lastTickTime={lastTickTime}
+            onManualRefresh={onRefresh}
+          />
+
           {/* Quick Refresh Button */}
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
             id="btn-header-refresh"
-            title={language === 'fa' ? 'به‌روزرسانی داده‌ها و قیمت‌ها' : 'Refresh Market Feeds'}
+            title={language === 'fa' ? 'به‌روزرسانی فوری داده‌ها و قیمت‌ها' : 'Force Market Refresh'}
             className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${isRefreshing ? 'animate-spin' : ''}`} />

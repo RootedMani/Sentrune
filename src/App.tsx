@@ -21,6 +21,8 @@ import { ModelTab } from './components/tabs/ModelTab';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import { useRealtimeStream } from './hooks/useRealtimeStream';
+import { LivePriceUpdate } from './types';
 
 function getInitialState() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -307,6 +309,63 @@ function DashboardContent() {
     }
   }, [selectedAsset, selectedInterval, activeTab, selectedWindow, fetchPriceSummary]);
 
+  // Real-time SSE and Fast Ticker streaming hook
+  const handlePriceTick = useCallback(
+    (assetId: number, update: LivePriceUpdate) => {
+      if (selectedAsset && selectedAsset.id === assetId) {
+        setLastClose(update.last_close);
+        setPriceChange(update.change);
+        setPriceChangePct(update.change_pct);
+
+        setPriceBars((prevBars) => {
+          if (!prevBars || prevBars.length === 0) return prevBars;
+          const updated = [...prevBars];
+          const lastIndex = updated.length - 1;
+          const lastBar = { ...updated[lastIndex] };
+          lastBar.close = update.last_close;
+          lastBar.high = Math.max(lastBar.high, update.high, update.last_close);
+          lastBar.low = Math.min(lastBar.low, update.low, update.last_close);
+          updated[lastIndex] = lastBar;
+          return updated;
+        });
+      }
+    },
+    [selectedAsset]
+  );
+
+  const handlePipelineRefresh = useCallback(() => {
+    fetchActiveTabData();
+    fetch('/api/status')
+      .then((res) => res.json())
+      .then((s) => {
+        if (s.last_refresh_at) setLastRefreshAt(s.last_refresh_at);
+      })
+      .catch(() => {});
+  }, [fetchActiveTabData]);
+
+  const {
+    connectionStatus,
+    livePrices,
+    isInitialSyncing,
+    initialSyncDone,
+    lastTickTime,
+    priceFlashes,
+  } = useRealtimeStream({
+    activeAssetId: selectedAsset?.id ?? null,
+    onPriceTick: handlePriceTick,
+    onPipelineRefresh: handlePipelineRefresh,
+  });
+
+  // When selectedAsset changes, if live price is already cached, immediately sync quote
+  useEffect(() => {
+    if (selectedAsset && livePrices[selectedAsset.id]) {
+      const lp = livePrices[selectedAsset.id];
+      setLastClose(lp.last_close);
+      setPriceChange(lp.change);
+      setPriceChangePct(lp.change_pct);
+    }
+  }, [selectedAsset, livePrices]);
+
   useEffect(() => {
     fetchActiveTabData();
   }, [fetchActiveTabData]);
@@ -342,6 +401,8 @@ function DashboardContent() {
         isRefreshing={isRefreshing}
         mobileMenuOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
+        livePrices={livePrices}
+        connectionStatus={connectionStatus}
       />
 
       {/* Main Content Area */}
@@ -360,6 +421,11 @@ function DashboardContent() {
           onRefresh={handleRefresh}
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
+          connectionStatus={connectionStatus}
+          isInitialSyncing={isInitialSyncing}
+          initialSyncDone={initialSyncDone}
+          lastTickTime={lastTickTime}
+          priceFlash={selectedAsset ? priceFlashes[selectedAsset.id] : null}
         />
 
         {/* Scrollable View Container */}

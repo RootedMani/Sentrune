@@ -22,6 +22,7 @@ import {
 import { useTheme, Theme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Globe } from 'lucide-react';
+import { LivePriceUpdate, RealtimeConnectionStatus } from '../types';
 
 interface SidebarProps {
   assets: Asset[];
@@ -35,6 +36,8 @@ interface SidebarProps {
   isRefreshing: boolean;
   mobileMenuOpen?: boolean;
   onCloseMobile?: () => void;
+  livePrices?: Record<number, LivePriceUpdate>;
+  connectionStatus?: RealtimeConnectionStatus;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -49,6 +52,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isRefreshing,
   mobileMenuOpen = false,
   onCloseMobile,
+  livePrices = {},
+  connectionStatus = 'connected',
 }) => {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, toggleLanguage, t, isRtl, toPersianDigits } = useLanguage();
@@ -192,6 +197,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="grid grid-cols-2 gap-1.5">
               {assets.map((asset) => {
                 const isSelected = selectedAsset?.id === asset.id;
+                const lp = livePrices[asset.id];
+                const lpIsPositive = lp ? lp.change >= 0 : true;
+
                 return (
                   <button
                     key={asset.id}
@@ -218,6 +226,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                       {asset.name}
                     </p>
+                    {lp && (
+                      <div className="flex items-center justify-between mt-1.5 pt-1 border-t border-slate-200/60 dark:border-slate-700/50 text-[10px] font-mono" dir="ltr">
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          ${lp.last_close > 100 ? lp.last_close.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : lp.last_close.toFixed(2)}
+                        </span>
+                        <span className={`font-semibold ${lpIsPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                          {lpIsPositive ? '+' : ''}{lp.change_pct}%
+                        </span>
+                      </div>
+                    )}
                   </button>
                 );
               })}
@@ -254,9 +272,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Radio className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                 {language === 'fa' ? 'فیدهای زنده و یکپارچه بازار' : 'Market Data Stream'}
               </span>
-              <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                {language === 'fa' ? 'متصل' : 'Active'}
+              <span className={`flex items-center gap-1 text-[11px] font-mono font-bold ${
+                connectionStatus === 'connected'
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-amber-600 dark:text-amber-400'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${
+                  connectionStatus === 'connected'
+                    ? 'bg-emerald-500 animate-pulse'
+                    : 'bg-amber-500'
+                }`} />
+                {connectionStatus === 'connected'
+                  ? (language === 'fa' ? 'زنده (SSE)' : 'Live Stream')
+                  : (language === 'fa' ? 'در حال اتصال' : 'Syncing')}
               </span>
             </div>
 

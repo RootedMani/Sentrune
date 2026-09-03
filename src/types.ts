@@ -361,3 +361,22 @@ export interface CustomModelArchitecture {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface LivePriceUpdate {
+  asset_id: number;
+  symbol: string;
+  name: string;
+  asset_type: 'stock' | 'crypto';
+  last_close: number;
+  change: number;
+  change_pct: number;
+  high: number;
+  low: number;
+  open?: number;
+  volume: number;
+  timestamp: string;
+  source: string;
+}
+
+export type RealtimeConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'fallback_polling' | 'disconnected';
+

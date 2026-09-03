@@ -16,6 +16,11 @@ import {
   trainCustomModel,
   autoTuneModel,
 } from './server/custom_models_engine.js';
+import {
+  startRealtimeEngine,
+  triggerInitialSync,
+  fetchFastLiveQuotes,
+} from './server/realtime.js';
 
 async function startServer() {
   const app = express();
@@ -38,6 +43,8 @@ async function startServer() {
       status: 'operational',
       total_assets: db.assets.length,
       total_bars: db.price_bars.length,
+      is_realtime_active: true,
+      streaming_endpoint: '/api/live/stream',
     });
   });
 
@@ -499,16 +506,19 @@ async function startServer() {
     }
   });
 
-  // API 15: Refresh pipeline
+  // API 15: Refresh pipeline with real-time broadcast
   app.post('/api/refresh', async (req: Request, res: Response) => {
     try {
-      const totals = await runIngestionAndFeatures();
-      res.json({ success: true, totals });
+      await triggerInitialSync();
+      res.json({ success: true, message: 'Pipeline refreshed and broadcasted to live clients' });
     } catch (err: any) {
       console.error('Refresh error:', err);
       res.status(500).json({ error: err.message || 'Refresh failed' });
     }
   });
+
+  // Attach Real-Time Streaming and Auto-Refresh Engine
+  startRealtimeEngine(app);
 
   // Vite middleware setup
   if (process.env.NODE_ENV !== 'production') {
