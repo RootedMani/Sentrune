@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Asset } from '../types';
 import {
   TrendingUp,
@@ -16,6 +16,8 @@ import {
   Newspaper,
   Users,
   Cpu,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -104,12 +106,87 @@ export const Navbar: React.FC<NavbarProps> = ({
     {
       id: 'model',
       key: 'tab_model',
-      defaultLabel: 'ML Prediction',
+      defaultLabel: 'AI Strategy & Insights',
       icon: <Cpu className="w-3.5 h-3.5" />,
     },
   ];
 
   const isPositive = priceChange >= 0;
+
+  // Horizontal Tab Scroll & Slider state
+  const tabScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragScrollLeft, setDragScrollLeft] = useState(0);
+
+  const checkScrollability = useCallback(() => {
+    const el = tabScrollRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 6);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 6);
+  }, []);
+
+  useEffect(() => {
+    checkScrollability();
+    window.addEventListener('resize', checkScrollability);
+    return () => window.removeEventListener('resize', checkScrollability);
+  }, [checkScrollability]);
+
+  // When active tab or language changes, auto-scroll active tab into view smoothly
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const activeEl = document.getElementById(`tab-btn-${activeTab}`);
+      if (activeEl && tabScrollRef.current) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+      checkScrollability();
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [activeTab, language, checkScrollability]);
+
+  const handleScrollLeft = () => {
+    if (tabScrollRef.current) {
+      tabScrollRef.current.scrollBy({ left: isRtl ? 220 : -220, behavior: 'smooth' });
+    }
+  };
+
+  const handleScrollRight = () => {
+    if (tabScrollRef.current) {
+      tabScrollRef.current.scrollBy({ left: isRtl ? -220 : 220, behavior: 'smooth' });
+    }
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.deltaY !== 0 && tabScrollRef.current) {
+      tabScrollRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!tabScrollRef.current) return;
+    setIsDragging(true);
+    setDragStartX(e.pageX - tabScrollRef.current.offsetLeft);
+    setDragScrollLeft(tabScrollRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !tabScrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - tabScrollRef.current.offsetLeft;
+    const walk = (x - dragStartX) * 1.5;
+    tabScrollRef.current.scrollLeft = dragScrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
 
   return (
     <header
@@ -158,24 +235,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div
                 className={`flex items-center gap-2 ${
                   isRtl ? 'pr-3 border-r' : 'pl-3 border-l'
-                } border-slate-200 dark:border-slate-700/80 shrink-0 transition-colors duration-300 ${
-                  priceFlash === 'up'
-                    ? 'ring-2 ring-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/40 rounded-lg px-2 py-0.5'
-                    : priceFlash === 'down'
-                    ? 'ring-2 ring-rose-500/50 bg-rose-50/50 dark:bg-rose-950/40 rounded-lg px-2 py-0.5'
-                    : ''
-                }`}
+                } border-slate-200 dark:border-slate-700/80 shrink-0 px-2 py-1 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 transition-colors duration-200`}
                 dir="ltr"
               >
-                <span className={`text-sm sm:text-base font-bold font-mono transition-colors duration-200 ${
-                  priceFlash === 'up'
-                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
-                    : priceFlash === 'down'
-                    ? 'text-rose-600 dark:text-rose-400 font-extrabold'
-                    : 'text-slate-900 dark:text-slate-100'
-                }`}>
-                  {formatCurrency(lastClose, lastClose > 10 ? 2 : 4)}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`text-sm sm:text-base font-bold font-mono transition-colors duration-200 ${
+                      priceFlash === 'up'
+                        ? 'text-emerald-500 dark:text-emerald-400'
+                        : priceFlash === 'down'
+                        ? 'text-rose-500 dark:text-rose-400'
+                        : 'text-slate-900 dark:text-slate-100'
+                    }`}
+                  >
+                    {formatCurrency(lastClose, lastClose > 10 ? 2 : 4)}
+                  </span>
+                  {priceFlash && (
+                    <span
+                      className={`inline-block w-1.5 h-1.5 rounded-full ${
+                        priceFlash === 'up' ? 'bg-emerald-500 animate-ping' : 'bg-rose-500 animate-ping'
+                      }`}
+                    />
+                  )}
+                </div>
                 <span
                   className={`inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-0.5 rounded-full ${
                     isPositive
@@ -257,30 +339,72 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Bottom Sub-Bar: Dedicated Full-Width Tab Navigation */}
-      <div className="px-4 lg:px-6 py-1.5 overflow-x-auto scrollbar-none flex items-center bg-slate-50/70 dark:bg-slate-900/50">
-        <nav id="dashboard-tabs" className="flex items-center gap-1.5 min-w-max">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                id={`tab-btn-${tab.id}`}
-                onClick={() => onTabChange(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0 ${
-                  isActive
-                    ? 'bg-cyan-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700/60'
-                }`}
-              >
-                <span className={`${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'}`}>
-                  {tab.icon}
-                </span>
-                <span>{t(tab.key, tab.defaultLabel)}</span>
-              </button>
-            );
-          })}
-        </nav>
+      {/* Bottom Sub-Bar: Dedicated Full-Width Tab Navigation with Interactive Slider Controls */}
+      <div className="relative border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/80 backdrop-blur-xs flex items-center">
+        {/* Left scroll chevron button */}
+        {canScrollLeft && (
+          <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center pr-4 pl-1.5 bg-gradient-to-r from-slate-50 via-slate-50/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 dark:to-transparent pointer-events-auto">
+            <button
+              onClick={handleScrollLeft}
+              className="p-1 rounded-md bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 shadow-sm border border-slate-200 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              aria-label="Slide tabs left"
+              title="Slide tabs left"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Scrollable / Draggable tab container */}
+        <div
+          ref={tabScrollRef}
+          onScroll={checkScrollability}
+          onWheel={handleWheel}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          className={`px-4 sm:px-6 py-1.5 overflow-x-auto scrollbar-none flex items-center w-full select-none ${
+            isDragging ? 'cursor-grabbing' : 'cursor-grab sm:cursor-default'
+          }`}
+        >
+          <nav id="dashboard-tabs" className="flex items-center gap-1.5 min-w-max">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  id={`tab-btn-${tab.id}`}
+                  onClick={() => onTabChange(tab.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-150 flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                    isActive
+                      ? 'bg-cyan-600 text-white shadow-xs ring-1 ring-cyan-500'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700/60'
+                  }`}
+                >
+                  <span className={`${isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                    {tab.icon}
+                  </span>
+                  <span>{t(tab.key, tab.defaultLabel)}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Right scroll chevron button */}
+        {canScrollRight && (
+          <div className="absolute right-0 top-0 bottom-0 z-10 flex items-center pl-4 pr-1.5 bg-gradient-to-l from-slate-50 via-slate-50/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 dark:to-transparent pointer-events-auto">
+            <button
+              onClick={handleScrollRight}
+              className="p-1 rounded-md bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 shadow-sm border border-slate-200 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              aria-label="Slide tabs right"
+              title="Slide tabs right"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

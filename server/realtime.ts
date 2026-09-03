@@ -56,6 +56,27 @@ function broadcastKeepAlive() {
   }
 }
 
+function getAssetDailyBaseline(
+  db: ReturnType<typeof getDatabase>,
+  assetId: number,
+  todayStr: string
+): { prevClose: number; open: number } {
+  const bars1d = db.price_bars
+    .filter((b) => b.asset_id === assetId && b.interval === '1d')
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+  if (bars1d.length === 0) return { prevClose: 100, open: 100 };
+
+  const lastBar = bars1d[bars1d.length - 1];
+  if (lastBar.timestamp.slice(0, 10) === todayStr) {
+    const prevBar = bars1d.length > 1 ? bars1d[bars1d.length - 2] : null;
+    const prevClose = prevBar ? prevBar.close : lastBar.open || lastBar.close * 0.98;
+    return { prevClose, open: lastBar.open || prevClose };
+  } else {
+    return { prevClose: lastBar.close, open: lastBar.close };
+  }
+}
+
 /**
  * Fast fetch for live market quotes (< 1s) from Binance, Coinbase, and Yahoo Finance
  */
@@ -128,12 +149,11 @@ export async function fetchFastLiveQuotes(): Promise<Map<number, LivePriceData>>
             const data = (await res.json()) as any;
             const price = parseFloat(parseFloat(data?.data?.amount || '0').toFixed(2));
             if (price > 0) {
-              const existing = latestPrices.get(asset.id);
-              const prevPrice = existing ? existing.last_close : price * 0.98;
-              const change = parseFloat((price - prevPrice).toFixed(2));
-              const changePct = parseFloat(((change / prevPrice) * 100).toFixed(2));
+              const { prevClose, open } = getAssetDailyBaseline(db, asset.id, todayStr);
+              const change = parseFloat((price - prevClose).toFixed(2));
+              const changePct = parseFloat(((change / prevClose) * 100).toFixed(2));
 
-              updateAssetBar(db, asset.id, price, prevPrice, Math.max(price, prevPrice), Math.min(price, prevPrice), 15000, 'coinbase_live', todayStr, now);
+              updateAssetBar(db, asset.id, price, open, Math.max(price, prevClose), Math.min(price, prevClose), 15000, 'coinbase_live', todayStr, now);
 
               latestPrices.set(asset.id, {
                 asset_id: asset.id,
@@ -143,9 +163,9 @@ export async function fetchFastLiveQuotes(): Promise<Map<number, LivePriceData>>
                 last_close: price,
                 change,
                 change_pct: changePct,
-                high: Math.max(price, prevPrice),
-                low: Math.min(price, prevPrice),
-                open: prevPrice,
+                high: Math.max(price, prevClose),
+                low: Math.min(price, prevClose),
+                open,
                 volume: 15000,
                 timestamp: now.toISOString(),
                 source: 'coinbase',
@@ -323,11 +343,10 @@ function simulateTick(
 
   if (existing.length > 0) {
     const lastBar = existing[existing.length - 1];
-    const prevBar = existing.length > 1 ? existing[existing.length - 2] : null;
-    const prevClose = prevBar ? prevBar.close : lastBar.close * 0.99;
+    const { prevClose, open } = getAssetDailyBaseline(db, asset.id, todayStr);
 
-    // Small micro-fluctuation (0.05% - 0.15%)
-    const microDelta = (Math.random() - 0.49) * 0.003 * lastBar.close;
+    // Micro spread tick (0.01% - 0.05%)
+    const microDelta = (Math.random() - 0.49) * 0.0006 * lastBar.close;
     const newClose = parseFloat((lastBar.close + microDelta).toFixed(2));
     const change = parseFloat((newClose - prevClose).toFixed(2));
     const changePct = parseFloat(((change / prevClose) * 100).toFixed(2));
@@ -346,7 +365,7 @@ function simulateTick(
       change_pct: changePct,
       high: lastBar.high,
       low: lastBar.low,
-      open: lastBar.open,
+      open: lastBar.open || open,
       volume: lastBar.volume,
       timestamp: now.toISOString(),
       source: 'live_feed',

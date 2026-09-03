@@ -105,15 +105,15 @@ async function startServer() {
     bars.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     let lastClose = 0;
-    let change = 0;
-    let changePct = 0;
+    let barChange = 0;
+    let barChangePct = 0;
 
     if (bars.length > 0) {
       lastClose = bars[bars.length - 1].close;
       if (bars.length > 1) {
         const prevClose = bars[bars.length - 2].close;
-        change = lastClose - prevClose;
-        changePct = prevClose > 0 ? (change / prevClose) * 100 : 0;
+        barChange = lastClose - prevClose;
+        barChangePct = prevClose > 0 ? (barChange / prevClose) * 100 : 0;
       }
     } else {
       // Fallback: lookup asset's latest price across any interval so price is NEVER 0
@@ -125,11 +125,30 @@ async function startServer() {
       }
     }
 
+    // Unified 24-hour / daily change baseline
+    const dailyBars = db.price_bars
+      .filter((b) => b.asset_id === assetId && b.interval === '1d')
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    let dailyChange = barChange;
+    let dailyChangePct = barChangePct;
+
+    if (dailyBars.length > 1) {
+      const dLast = dailyBars[dailyBars.length - 1].close;
+      const dPrev = dailyBars[dailyBars.length - 2].close;
+      dailyChange = parseFloat((dLast - dPrev).toFixed(2));
+      dailyChangePct = dPrev > 0 ? parseFloat(((dailyChange / dPrev) * 100).toFixed(2)) : 0;
+    }
+
     res.json({
       bars,
       last_close: lastClose,
-      change,
-      change_pct: changePct,
+      change: dailyChange, // Always standard daily 24h change for header quotes
+      change_pct: dailyChangePct,
+      daily_change: dailyChange,
+      daily_change_pct: dailyChangePct,
+      bar_change: barChange,
+      bar_change_pct: barChangePct,
     });
   });
 
