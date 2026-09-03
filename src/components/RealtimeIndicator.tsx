@@ -1,26 +1,22 @@
 import React from 'react';
-import { Radio, RefreshCw, CheckCircle2, Wifi, WifiOff } from 'lucide-react';
+import { RefreshCw, WifiOff } from 'lucide-react';
 import { RealtimeConnectionStatus } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
 interface RealtimeIndicatorProps {
   connectionStatus: RealtimeConnectionStatus;
-  isInitialSyncing: boolean;
-  initialSyncDone: boolean;
-  isRefreshing: boolean;
+  isInitialSyncing?: boolean;
+  initialSyncDone?: boolean;
+  isRefreshing?: boolean;
   lastTickTime: number;
-  onManualRefresh: () => void;
+  onManualRefresh?: () => void;
 }
 
 export const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
   connectionStatus,
-  isInitialSyncing,
-  initialSyncDone,
-  isRefreshing,
   lastTickTime,
-  onManualRefresh,
 }) => {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const [secondsAgo, setSecondsAgo] = React.useState<number>(0);
 
   React.useEffect(() => {
@@ -34,21 +30,6 @@ export const RealtimeIndicator: React.FC<RealtimeIndicatorProps> = ({
 
   return (
     <div className="flex items-center gap-2">
-      {/* Initial Sync Notification Toast / Banner on First Visit */}
-      {isInitialSyncing && (
-        <div
-          id="realtime-initial-sync-banner"
-          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-50 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-800 text-xs font-semibold animate-pulse"
-        >
-          <RefreshCw className="w-3 h-3 animate-spin text-cyan-600 dark:text-cyan-400" />
-          <span>
-            {language === 'fa'
-              ? 'در حال همگام‌سازی خودکار داده‌های زنده...'
-              : 'Auto-syncing real-time market data...'}
-          </span>
-        </div>
-      )}
-
       {/* Live Stream Status Pill */}
       <div
         id="realtime-stream-pill"
