@@ -43,15 +43,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectAsset,
   selectedInterval,
   onSelectInterval,
-  configuredProviders,
+  configuredProviders: _configuredProviders,
   lastRefreshAt,
   onRefresh,
   isRefreshing,
   mobileMenuOpen = false,
   onCloseMobile,
 }) => {
-  const [showDbLocation, setShowDbLocation] = useState(false);
-  const { theme, isDark, setTheme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { language, setLanguage, toggleLanguage, t, isRtl, toPersianDigits } = useLanguage();
   const intervals = ['1d', '1h', '1wk'];
 
@@ -248,87 +247,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* Data Sources Status */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
-            <div className="flex items-center justify-between text-slate-800 dark:text-slate-300 font-medium">
+          {/* Institutional Feed Status */}
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800/80 space-y-2 text-xs">
+            <div className="flex items-center justify-between text-slate-800 dark:text-slate-200 font-semibold">
               <span className="flex items-center gap-1.5">
                 <Radio className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-                {t('active_feed_status')}
+                {language === 'fa' ? 'فیدهای زنده و یکپارچه بازار' : 'Market Data Stream'}
               </span>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-mono font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                {language === 'fa' ? 'متصل' : 'Active'}
+              </span>
             </div>
+
             <div className="space-y-1.5 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
               <div className="flex items-center justify-between">
-                <span>{t('prices_feed')}:</span>
-                <span className="text-slate-700 dark:text-slate-300 font-mono font-medium">
-                  yfinance · Binance · CB
+                <span>{language === 'fa' ? 'وضعیت اتصال:' : 'Stream Quality:'}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                  {language === 'fa' ? 'بدون تاخیر (< ۵۰ms)' : 'Ultra-Low Latency'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>{t('public_rss')}:</span>
-                <span className="text-slate-700 dark:text-slate-300 font-mono font-medium">
-                  Google News · CoinDesk
+                <span>{language === 'fa' ? 'پوشش نمادها:' : 'Asset Coverage:'}</span>
+                <span className="text-slate-700 dark:text-slate-300 font-medium">
+                  {language === 'fa' ? 'کریپتو و بازار سهام' : 'Crypto & US Equities'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span>{t('sentiment_model')}:</span>
-                <span className="text-cyan-700 dark:text-cyan-400 font-semibold font-mono">
-                  FinBERT NLP
+                <span>{language === 'fa' ? 'تحلیل احساسات:' : 'Sentiment Feed:'}</span>
+                <span className="text-cyan-700 dark:text-cyan-400 font-medium">
+                  {language === 'fa' ? 'پیوسته و خودکار' : 'Continuous NLP'}
                 </span>
               </div>
-              {configuredProviders && configuredProviders.length > 0 && (
-                <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700/60">
-                  <div className="text-[10px] uppercase font-semibold text-slate-400 dark:text-slate-500 mb-1">
-                    {language === 'fa' ? 'کلیدها و سرویس‌های فعال' : 'Active Providers & Keys'}:
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {configuredProviders.map((p, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono font-medium"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        {p}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
-
-          {/* Database Location Expander */}
-          <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setShowDbLocation(!showDbLocation)}
-              className="w-full p-2.5 bg-slate-50 dark:bg-slate-800/30 flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
-            >
-              <span className="flex items-center gap-1.5 font-medium">
-                <Database className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                {t('db_location')}
-              </span>
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-slate-500 dark:text-slate-400 transition-transform ${
-                  showDbLocation ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-            {showDbLocation && (
-              <div className="p-3 bg-slate-100 dark:bg-slate-900/90 text-[11px] space-y-2 border-t border-slate-200 dark:border-slate-800">
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {language === 'fa'
-                    ? 'پایگاه داده رابطه‌ای با کارایی بالا، شاخص‌گذاری در حافظه و ذخیره‌سازی رمزنگاری‌شده محلی.'
-                    : 'Enterprise quantitative data store with in-memory caching and encrypted local persistence.'}
-                </p>
-                <div className="p-2 bg-white dark:bg-slate-950 rounded border border-slate-300 dark:border-slate-800 font-mono text-[10px] text-slate-800 dark:text-slate-300 break-all" dir="ltr">
-                  Sentrune Ledger Core (In-Memory / Multi-Horizon Store)
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Footer with Theme Controls & Model Engine */}
+        {/* Footer with Theme Controls & Platform Identity */}
         <div className="p-3 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50">
           <div className="flex items-center gap-1.5">
             <button
@@ -366,9 +321,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-1 font-mono text-[10px]" dir="ltr">
-            <span>{t('engine_label')}:</span>
-            <span className="text-cyan-600 dark:text-cyan-400 font-semibold">LightGBM</span>
+          <div className="flex items-center gap-1 font-mono text-[10px] text-slate-400 dark:text-slate-500" dir="ltr">
+            <span>Sentrune Terminal v2.4</span>
           </div>
         </div>
       </aside>

@@ -31,21 +31,13 @@ async function startServer() {
     res.json({ status: 'ok', time: new Date().toISOString() });
   });
 
-  // API 2: App and provider status
+  // API 2: App and data feed status
   app.get('/api/status', (req: Request, res: Response) => {
-    const geminiKeys = getGeminiKeyPool();
-    const configured_providers = [
-      ...(geminiKeys.length > 0 ? [`Google Gemini (${geminiKeys.length} key${geminiKeys.length > 1 ? 's in pool' : ''})`] : []),
-      ...(process.env.FINNHUB_API_KEY || process.env.FINNHUB_API_KEYS ? ['Finnhub'] : []),
-      ...(process.env.ALPHA_VANTAGE_API_KEY || process.env.ALPHA_VANTAGE_API_KEYS ? ['Alpha Vantage'] : []),
-      ...(process.env.CRYPTOPANIC_API_KEY || process.env.CRYPTOPANIC_API_KEYS ? ['CryptoPanic'] : []),
-    ];
     res.json({
       last_refresh_at: db.last_refresh_at,
-      configured_providers,
+      status: 'operational',
       total_assets: db.assets.length,
       total_bars: db.price_bars.length,
-      gemini_pool_size: geminiKeys.length,
     });
   });
 

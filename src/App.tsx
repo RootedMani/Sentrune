@@ -363,6 +363,9 @@ function DashboardContent() {
                   priceChangePct={priceChangePct}
                   onNavigateTab={(tab) => setActiveTab(tab)}
                   prediction={modelData?.prediction}
+                  bars={priceBars}
+                  technicals={technicals}
+                  sentimentAggs={sentimentAggs}
                 />
               )}
 

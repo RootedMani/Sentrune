@@ -59,8 +59,8 @@ export const ModelTab: React.FC<ModelTabProps> = ({
   const { isDark } = useTheme();
   const { t, language, isRtl, toPersianDigits, formatNumber, formatPercent, formatDate } = useLanguage();
 
-  // Sub-tab selection: 'simulation' | 'tournament' | 'quant_matrix' | 'architecture_lab'
-  const [activeSubMode, setActiveSubMode] = useState<'simulation' | 'tournament' | 'quant_matrix' | 'architecture_lab'>('architecture_lab');
+  // Sub-tab selection: 'quant_matrix' | 'simulation' | 'tournament' | 'architecture_lab'
+  const [activeSubMode, setActiveSubMode] = useState<'quant_matrix' | 'simulation' | 'tournament' | 'architecture_lab'>('quant_matrix');
 
   // AI Tournament state
   const [tournamentData, setTournamentData] = useState<AiTournamentResponse | null>(null);
@@ -276,16 +276,16 @@ export const ModelTab: React.FC<ModelTabProps> = ({
       <div className="p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/70 shadow-xs flex items-center justify-between gap-2 overflow-x-auto">
         <div className="flex items-center gap-1 min-w-max">
           <button
-            onClick={() => setActiveSubMode('architecture_lab')}
-            id="subtab-btn-architecture"
+            onClick={() => setActiveSubMode('quant_matrix')}
+            id="subtab-btn-quant"
             className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubMode === 'architecture_lab'
+              activeSubMode === 'quant_matrix'
                 ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs border border-slate-200 dark:border-slate-700'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
-            <BrainCircuit className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-            <span>{language === 'fa' ? 'طراحی و تنظیم استراتژی‌های پیشرفته' : 'Advanced Strategy Studio'}</span>
+            <BarChart3 className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+            <span>{language === 'fa' ? 'پیش‌بینی کمّی و رژیم بازار' : 'Quantitative Regime & Signals'}</span>
           </button>
 
           <button
@@ -298,7 +298,7 @@ export const ModelTab: React.FC<ModelTabProps> = ({
             }`}
           >
             <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>{language === 'fa' ? 'ارزیابی عملکرد پرتفوی و استراتژی' : 'Portfolio & Strategy Performance'}</span>
+            <span>{language === 'fa' ? 'تحلیل عملکرد و آزمون استراتژی' : 'Strategy Performance & Ledger'}</span>
           </button>
 
           <button
@@ -311,20 +311,20 @@ export const ModelTab: React.FC<ModelTabProps> = ({
             }`}
           >
             <Zap className="w-4 h-4 text-amber-500" />
-            <span>{language === 'fa' ? 'اجماع مدل‌های تحلیلی هوش مصنوعی' : 'Multi-Model Market Consensus'}</span>
+            <span>{language === 'fa' ? 'اجماع مدل‌های تحلیلی' : 'Multi-Strategy Consensus'}</span>
           </button>
 
           <button
-            onClick={() => setActiveSubMode('quant_matrix')}
-            id="subtab-btn-quant"
+            onClick={() => setActiveSubMode('architecture_lab')}
+            id="subtab-btn-architecture"
             className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
-              activeSubMode === 'quant_matrix'
+              activeSubMode === 'architecture_lab'
                 ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs border border-slate-200 dark:border-slate-700'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
-            <BarChart3 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <span>{language === 'fa' ? 'ماتریس اعتبارسنجی کمّی' : 'Quantitative Validation Matrix'}</span>
+            <BrainCircuit className="w-4 h-4 text-purple-500" />
+            <span>{language === 'fa' ? 'استودیوی تنظیم الگوریتم' : 'Algorithmic Studio'}</span>
           </button>
         </div>
       </div>
