@@ -1,0 +1,8 @@
+{
+  "name": "Sentrune Trading Assistant",
+  "description": "سنترون (Sentrune) - Quantitative Market Intelligence Workstation with multi-factor technical indicators, FinBERT sentiment synthesis, neural architectures, and live inference benchmarking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
