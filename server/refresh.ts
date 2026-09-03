@@ -1,4 +1,4 @@
-import { getDatabase, PriceBar, IngestionLog } from './db.js';
+import { getDatabase, PriceBar, IngestionLog, ensureBarsAndTechnicals } from './db.js';
 import { calculateIndicators } from './indicators.js';
 import { scrapeFreeNewsFeeds, scrapeSocialDiscussions, recalculateSentimentAggregates } from './scraper.js';
 import { translateNewsItems } from './translator.js';
@@ -380,15 +380,33 @@ export async function runIngestionAndFeatures(): Promise<Record<string, number>>
     console.warn('Sentiment recalculation error:', err);
   }
 
-  // 6. Recompute technical features for all assets
+  // 6. Recompute technical features for all assets across all supported intervals (1d, 1h, 1wk)
   for (const asset of db.assets) {
-    const bars = db.price_bars.filter((b) => b.asset_id === asset.id && b.interval === '1d');
-    if (bars.length > 0) {
-      const computed = calculateIndicators(bars);
-      // Replace or merge technical features
-      db.technical_features = db.technical_features.filter(
-        (tf) => !(tf.asset_id === asset.id && tf.interval === '1d')
-      ).concat(computed);
+    const latest1d = db.price_bars
+      .filter((b) => b.asset_id === asset.id && b.interval === '1d')
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+      .slice(-1)[0];
+
+    for (const iv of ['1d', '1h', '1wk']) {
+      let bars = db.price_bars.filter((b) => b.asset_id === asset.id && b.interval === iv);
+      if (bars.length === 0) {
+        bars = ensureBarsAndTechnicals(db, asset.id, iv);
+      } else if (latest1d && (iv === '1h' || iv === '1wk')) {
+        const sorted = [...bars].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        const lastBar = sorted[sorted.length - 1];
+        if (lastBar) {
+          lastBar.close = latest1d.close;
+          lastBar.high = Math.max(lastBar.high, latest1d.close);
+          lastBar.low = Math.min(lastBar.low, latest1d.close);
+        }
+      }
+
+      if (bars.length > 0) {
+        const computed = calculateIndicators(bars);
+        db.technical_features = db.technical_features
+          .filter((tf) => !(tf.asset_id === asset.id && tf.interval === iv))
+          .concat(computed);
+      }
     }
   }
 

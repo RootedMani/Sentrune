@@ -55,11 +55,15 @@ export const TechnicalsTab: React.FC<TechnicalsTabProps> = ({
   const [showSma200, setShowSma200] = useState(false);
   const [showBands, setShowBands] = useState(true);
 
+  const safeTechnicals = Array.isArray(technicals) ? technicals : [];
+  const safeBars = Array.isArray(bars) ? bars : [];
+
   // Merge technicals with price close
-  const mergedData = technicals.map((tf) => {
-    const matchingBar = bars.find(
+  const mergedData = safeTechnicals.map((tf) => {
+    const matchingBar = safeBars.find(
       (b) =>
         b.timestamp === tf.timestamp ||
+        b.timestamp.slice(0, 13) === tf.timestamp.slice(0, 13) ||
         b.timestamp.slice(0, 10) === tf.timestamp.slice(0, 10)
     );
     return {
@@ -85,8 +89,8 @@ export const TechnicalsTab: React.FC<TechnicalsTabProps> = ({
     };
   });
 
-  const latest = technicals[technicals.length - 1];
-  const latestBar = bars[bars.length - 1];
+  const latest = safeTechnicals[safeTechnicals.length - 1];
+  const latestBar = safeBars[safeBars.length - 1];
 
   // Quick Signal Assessment
   const isAboveSma20 =

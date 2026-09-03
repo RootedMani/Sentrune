@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { getDatabase, TechnicalFeature } from './server/db.js';
+import { getDatabase, TechnicalFeature, ensureBarsAndTechnicals } from './server/db.js';
 import { generatePredictionAndExplanation } from './server/narrative.js';
 import { runIngestionAndFeatures } from './server/refresh.js';
 import { translateNewsItems, translateSocialItems } from './server/translator.js';
@@ -92,6 +92,9 @@ async function startServer() {
     const interval = (req.query.interval as string) || '1d';
 
     let bars = db.price_bars.filter((b) => b.asset_id === assetId && b.interval === interval);
+    if (bars.length === 0) {
+      bars = ensureBarsAndTechnicals(db, assetId, interval);
+    }
     bars.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     let lastClose = 0;
@@ -104,6 +107,14 @@ async function startServer() {
         const prevClose = bars[bars.length - 2].close;
         change = lastClose - prevClose;
         changePct = prevClose > 0 ? (change / prevClose) * 100 : 0;
+      }
+    } else {
+      // Fallback: lookup asset's latest price across any interval so price is NEVER 0
+      const anyBars = db.price_bars
+        .filter((b) => b.asset_id === assetId)
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      if (anyBars.length > 0) {
+        lastClose = anyBars[anyBars.length - 1].close;
       }
     }
 
@@ -121,6 +132,10 @@ async function startServer() {
     const interval = (req.query.interval as string) || '1d';
 
     let technical = db.technical_features.filter((tf) => tf.asset_id === assetId && tf.interval === interval);
+    if (technical.length === 0) {
+      ensureBarsAndTechnicals(db, assetId, interval);
+      technical = db.technical_features.filter((tf) => tf.asset_id === assetId && tf.interval === interval);
+    }
     technical.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     res.json(technical);

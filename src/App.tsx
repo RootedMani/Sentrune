@@ -182,10 +182,14 @@ function DashboardContent() {
       const res = await fetch(`/api/prices?asset_id=${assetId}&interval=${interval}`);
       if (res.ok) {
         const data = await res.json();
-        setLastClose(data.last_close || 0);
-        setPriceChange(data.change || 0);
-        setPriceChangePct(data.change_pct || 0);
-        setPriceBars(data.bars || []);
+        if (data.last_close && data.last_close > 0) {
+          setLastClose(data.last_close);
+          setPriceChange(data.change ?? 0);
+          setPriceChangePct(data.change_pct ?? 0);
+        }
+        if (Array.isArray(data.bars) && data.bars.length > 0) {
+          setPriceBars(data.bars);
+        }
       }
     } catch (err) {
       console.error('Error fetching price summary:', err);
@@ -204,9 +208,10 @@ function DashboardContent() {
       fetchPriceSummary(assetId, selectedInterval);
 
       if (activeTab === 'overview') {
-        const [res, modelRes] = await Promise.all([
+        const [res, modelRes, priceRes] = await Promise.all([
           fetch(`/api/overview?asset_id=${assetId}`),
           fetch(`/api/model?asset_id=${assetId}&interval=${selectedInterval}`),
+          fetch(`/api/prices?asset_id=${assetId}&interval=${selectedInterval}`),
         ]);
         if (res.ok) {
           const data = await res.json();
@@ -218,14 +223,29 @@ function DashboardContent() {
           const mData = await modelRes.json();
           setModelData(mData);
         }
+        if (priceRes.ok) {
+          const pData = await priceRes.json();
+          if (Array.isArray(pData.bars) && pData.bars.length > 0) {
+            setPriceBars(pData.bars);
+          }
+          if (pData.last_close && pData.last_close > 0) {
+            setLastClose(pData.last_close);
+            setPriceChange(pData.change ?? 0);
+            setPriceChangePct(pData.change_pct ?? 0);
+          }
+        }
       } else if (activeTab === 'prices') {
         const res = await fetch(`/api/prices?asset_id=${assetId}&interval=${selectedInterval}`);
         if (res.ok) {
           const data = await res.json();
-          setPriceBars(data.bars || []);
-          setLastClose(data.last_close || 0);
-          setPriceChange(data.change || 0);
-          setPriceChangePct(data.change_pct || 0);
+          if (Array.isArray(data.bars)) {
+            setPriceBars(data.bars);
+          }
+          if (data.last_close && data.last_close > 0) {
+            setLastClose(data.last_close);
+            setPriceChange(data.change ?? 0);
+            setPriceChangePct(data.change_pct ?? 0);
+          }
         }
       } else if (activeTab === 'technicals') {
         const [techRes, priceRes] = await Promise.all([
@@ -234,11 +254,19 @@ function DashboardContent() {
         ]);
         if (techRes.ok) {
           const tData = await techRes.json();
-          setTechnicals(tData || []);
+          const techList = Array.isArray(tData) ? tData : tData.technical_features || [];
+          setTechnicals(techList);
         }
         if (priceRes.ok) {
           const pData = await priceRes.json();
-          setPriceBars(pData.bars || []);
+          if (Array.isArray(pData.bars) && pData.bars.length > 0) {
+            setPriceBars(pData.bars);
+          }
+          if (pData.last_close && pData.last_close > 0) {
+            setLastClose(pData.last_close);
+            setPriceChange(pData.change ?? 0);
+            setPriceChangePct(pData.change_pct ?? 0);
+          }
         }
       } else if (activeTab === 'sentiment') {
         const res = await fetch(`/api/sentiment?asset_id=${assetId}`);

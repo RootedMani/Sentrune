@@ -65,7 +65,12 @@ export const PricesTab: React.FC<PricesTabProps> = ({
   // High, Low, Average calculations
   const stats = useMemo(() => {
     if (filteredBars.length === 0) {
-      return { high: 0, low: 0, avgVol: 0, periodReturn: 0 };
+      return {
+        high: lastClose > 0 ? lastClose : 0,
+        low: lastClose > 0 ? lastClose : 0,
+        avgVol: 0,
+        periodReturn: changePct,
+      };
     }
     const highs = filteredBars.map((b) => b.high);
     const lows = filteredBars.map((b) => b.low);
@@ -79,23 +84,31 @@ export const PricesTab: React.FC<PricesTabProps> = ({
     const periodReturn = firstClose > 0 ? ((currentClose - firstClose) / firstClose) * 100 : 0;
 
     return { high, low, avgVol, periodReturn };
-  }, [filteredBars]);
+  }, [filteredBars, lastClose, changePct]);
 
   // Format data for Recharts
   const chartData = useMemo(() => {
-    return filteredBars.map((b) => ({
-      timestamp: new Date(b.timestamp).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      }),
-      fullTime: b.timestamp,
-      close: b.close,
-      open: b.open,
-      high: b.high,
-      low: b.low,
-      volume: b.volume,
-    }));
-  }, [filteredBars]);
+    return filteredBars.map((b) => {
+      const d = new Date(b.timestamp);
+      const isIntraday = interval === '1h';
+      const label = isIntraday
+        ? `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`
+        : d.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          });
+
+      return {
+        timestamp: label,
+        fullTime: b.timestamp,
+        close: b.close,
+        open: b.open,
+        high: b.high,
+        low: b.low,
+        volume: b.volume,
+      };
+    });
+  }, [filteredBars, interval]);
 
   // Search filtered raw bars
   const tableBars = useMemo(() => {

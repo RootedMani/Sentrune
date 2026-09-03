@@ -198,29 +198,43 @@ export interface DatabaseState {
 
 let dbInstance: DatabaseState | null = null;
 
-// Helper to generate a realistic random-walk OHLCV series for 90 days
-function generatePriceHistory(
+// Helper to generate a realistic random-walk OHLCV series for any interval
+export function generatePriceHistory(
   assetId: number,
   basePrice: number,
   volatility: number,
   source: string,
-  days = 90
+  interval: '1d' | '1h' | '1wk' = '1d',
+  count?: number
 ): PriceBar[] {
   const bars: PriceBar[] = [];
   const now = new Date();
-  let currentPrice = basePrice;
-  let currentVol = 1000000;
+  let stepMs = 86400 * 1000;
+  let numBars = count || 90;
+  let stepVol = volatility;
+  let currentVol = assetId >= 3 ? 45000 : 1200000;
 
-  // We walk forward from 90 days ago to now
+  if (interval === '1h') {
+    stepMs = 3600 * 1000;
+    numBars = count || 168; // 7 days of 24h trading
+    stepVol = volatility / 4.8; // scale down daily volatility for 1-hour slices
+    currentVol = Math.floor(currentVol / 24);
+  } else if (interval === '1wk') {
+    stepMs = 7 * 86400 * 1000;
+    numBars = count || 52; // 1 year of weekly candles
+    stepVol = volatility * 2.2; // scale up daily volatility for weekly slices
+    currentVol = currentVol * 5;
+  }
+
+  let currentPrice = basePrice;
   const tempBars: { date: Date; open: number; high: number; low: number; close: number; volume: number }[] = [];
 
-  for (let i = days; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 86400 * 1000);
-    // skip weekends for stocks if wanted, but keep continuous for uniform daily charts
-    const dailyReturn = (Math.random() - 0.485) * volatility;
+  for (let i = numBars; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * stepMs);
+    const stepReturn = (Math.random() - 0.485) * stepVol;
     const open = currentPrice;
-    const close = parseFloat((open * (1 + dailyReturn)).toFixed(2));
-    const range = Math.abs(close - open) + currentPrice * (volatility * 0.5 * Math.random());
+    const close = parseFloat((open * (1 + stepReturn)).toFixed(2));
+    const range = Math.abs(close - open) + currentPrice * (stepVol * 0.5 * Math.random());
     const high = parseFloat((Math.max(open, close) + range * Math.random()).toFixed(2));
     const low = parseFloat((Math.min(open, close) - range * Math.random()).toFixed(2));
     const volume = Math.floor(currentVol * (0.7 + Math.random() * 0.6));
@@ -233,7 +247,7 @@ function generatePriceHistory(
     bars.push({
       id: idx + 1,
       asset_id: assetId,
-      interval: '1d',
+      interval,
       timestamp: tb.date.toISOString(),
       open: tb.open,
       high: tb.high,
@@ -245,6 +259,46 @@ function generatePriceHistory(
   });
 
   return bars;
+}
+
+// Resilient helper to dynamically guarantee price bars & technical indicators exist for any requested interval
+export function ensureBarsAndTechnicals(db: DatabaseState, assetId: number, interval: string): PriceBar[] {
+  const safeInterval = (['1d', '1h', '1wk'].includes(interval) ? interval : '1d') as '1d' | '1h' | '1wk';
+  const existing = db.price_bars.filter((b) => b.asset_id === assetId && b.interval === safeInterval);
+  if (existing.length > 0) return existing;
+
+  const asset = db.assets.find((a) => a.id === assetId) || db.assets[0];
+  const anyBars = db.price_bars
+    .filter((b) => b.asset_id === assetId)
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+  const basePrice =
+    anyBars.length > 0
+      ? anyBars[anyBars.length - 1].close
+      : asset.asset_type === 'crypto'
+      ? asset.symbol === 'BTC'
+        ? 59500.0
+        : 2520.0
+      : asset.symbol === 'AAPL'
+      ? 218.5
+      : 432.0;
+
+  const vol = asset.asset_type === 'crypto' ? 0.035 : 0.018;
+  const source = asset.asset_type === 'crypto' ? 'binance' : 'yfinance';
+
+  const newBars = generatePriceHistory(assetId, basePrice, vol, source, safeInterval);
+  newBars.forEach((b) => {
+    b.id = db.price_bars.length + 1;
+    db.price_bars.push(b);
+  });
+
+  const computed = calculateIndicators(newBars);
+  computed.forEach((tf) => {
+    tf.id = db.technical_features.length + 1;
+    db.technical_features.push(tf);
+  });
+
+  return newBars;
 }
 
 export function getDatabase(): DatabaseState {
@@ -259,33 +313,42 @@ export function getDatabase(): DatabaseState {
     { id: 4, symbol: 'ETH', name: 'Ethereum', asset_type: 'crypto', exchange: 'Binance', pair: 'ETHUSDT', is_active: 1 },
   ];
 
-  // 1. Generate full price bars for all 4 assets
+  // 1. Generate full price bars for all 4 assets across ALL supported intervals (1d, 1h, 1wk)
   let allBars: PriceBar[] = [];
   let barIdCounter = 1;
 
-  const aaplBars = generatePriceHistory(1, 218.5, 0.018, 'yfinance', 90);
-  const msftBars = generatePriceHistory(2, 432.0, 0.016, 'yfinance', 90);
-  const btcBars = generatePriceHistory(3, 59500.0, 0.035, 'binance', 90);
-  const ethBars = generatePriceHistory(4, 2520.0, 0.042, 'binance', 90);
+  const assetConfigs = [
+    { id: 1, basePrice: 218.5, vol: 0.018, source: 'yfinance' },
+    { id: 2, basePrice: 432.0, vol: 0.016, source: 'yfinance' },
+    { id: 3, basePrice: 59500.0, vol: 0.035, source: 'binance' },
+    { id: 4, basePrice: 2520.0, vol: 0.042, source: 'binance' },
+  ];
 
-  [aaplBars, msftBars, btcBars, ethBars].forEach((assetBarList) => {
-    assetBarList.forEach((b) => {
-      b.id = barIdCounter++;
-      allBars.push(b);
-    });
-  });
+  const intervals: ('1d' | '1h' | '1wk')[] = ['1d', '1h', '1wk'];
 
-  // 2. Compute full technical features for each asset
+  for (const cfg of assetConfigs) {
+    for (const iv of intervals) {
+      const bars = generatePriceHistory(cfg.id, cfg.basePrice, cfg.vol, cfg.source, iv);
+      bars.forEach((b) => {
+        b.id = barIdCounter++;
+        allBars.push(b);
+      });
+    }
+  }
+
+  // 2. Compute full technical features for each asset and each interval
   let allTechnicals: TechnicalFeature[] = [];
   let techIdCounter = 1;
 
   for (const asset of defaultAssets) {
-    const bars = allBars.filter((b) => b.asset_id === asset.id);
-    const computed = calculateIndicators(bars);
-    computed.forEach((tf) => {
-      tf.id = techIdCounter++;
-      allTechnicals.push(tf);
-    });
+    for (const iv of intervals) {
+      const bars = allBars.filter((b) => b.asset_id === asset.id && b.interval === iv);
+      const computed = calculateIndicators(bars);
+      computed.forEach((tf) => {
+        tf.id = techIdCounter++;
+        allTechnicals.push(tf);
+      });
+    }
   }
 
   // 3. Seed targeted news items for each asset
