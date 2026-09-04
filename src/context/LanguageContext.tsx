@@ -285,7 +285,38 @@ const faTranslations: Translations = {
   loss_func_label: 'تابع هدف بهینه‌سازی',
   optimizer_label: 'الگوریتم بهینه‌ساز',
   activation_label: 'تابع فعال‌ساز',
-  feature_selection_label: 'مجموعه متغیرهای ورودی',
+  // Extended Trading & Signal terminology
+  action_buy: 'خرید (BUY)',
+  action_sell: 'فروش (SELL)',
+  action_hold: 'نگهداری (HOLD)',
+  action_long: 'معامله خرید (Long)',
+  action_short: 'معامله فروش (Short)',
+  suggested_allocation: 'درصد تخصیص سرمایه',
+  target_take_profit: 'حد سود تعیین‌شده (Take Profit)',
+  risk_stop_loss: 'حد ضرر خروج (Stop Loss)',
+  risk_reward_ratio: 'نسبت سود به ریسک (R:R)',
+  key_drivers: 'عوامل کلیدی تصمیم‌گیری',
+  ai_reasoning: 'زنجیره استدلال و تحلیل هوش مصنوعی',
+  latency_ms: 'تاخیر پردازش',
+  throughput_tok_sec: 'سرعت پردازش (توکن بر ثانیه)',
+  tokens_used: 'توکن‌های مصرف‌شده',
+  agreement_score: 'میزان همگرایی و توافق مدل‌ها',
+  synthetic_conviction: 'درجه قطعیت استراتژیک',
+  trade_filter_all: 'همه معاملات',
+  trade_filter_buy: 'سفارش‌های خرید',
+  trade_filter_sell: 'سفارش‌های فروش',
+  trade_filter_win: 'معاملات سودده',
+  trade_filter_loss: 'معاملات زیان‌ده',
+  alpha_vs_benchmark: 'آلفای استراتژی نسبت به بازار',
+  equity_curve_title: 'نمودار رشد ارزش پرتفوی',
+  benchmark_curve: 'بازدهی انفعالی بازار (Buy & Hold)',
+  current_holdings: 'ارزش دارایی‌های در پوزیشن',
+  available_cash: 'موجودی نقد آزاد',
+  daily_range: 'بازه نوسان ۲۴ ساعته',
+  daily_high: 'سقف ۲۴ ساعته',
+  daily_low: 'کف ۲۴ ساعته',
+  current_price: 'قیمت جاری',
+  live_status: 'زنده',
 };
 
 const enTranslations: Translations = {
@@ -568,6 +599,38 @@ const enTranslations: Translations = {
   optimizer_label: 'Optimizer',
   activation_label: 'Activation Function',
   feature_selection_label: 'Feature Selection',
+  // Extended Trading & Signal terminology
+  action_buy: 'BUY',
+  action_sell: 'SELL',
+  action_hold: 'HOLD',
+  action_long: 'Long Position',
+  action_short: 'Short Position',
+  suggested_allocation: 'Position Allocation',
+  target_take_profit: 'Target Take Profit',
+  risk_stop_loss: 'Risk Stop Loss',
+  risk_reward_ratio: 'Risk:Reward Ratio (R:R)',
+  key_drivers: 'Key Catalysts & Drivers',
+  ai_reasoning: 'AI Chain-of-Thought Rationale',
+  latency_ms: 'Inference Latency',
+  throughput_tok_sec: 'Throughput (tok/s)',
+  tokens_used: 'Tokens Used',
+  agreement_score: 'Consensus Agreement',
+  synthetic_conviction: 'Strategic Conviction',
+  trade_filter_all: 'All Trades',
+  trade_filter_buy: 'Buys',
+  trade_filter_sell: 'Sells',
+  trade_filter_win: 'Winning Trades',
+  trade_filter_loss: 'Losing Trades',
+  alpha_vs_benchmark: 'Alpha vs Benchmark',
+  equity_curve_title: 'Portfolio Equity Growth',
+  benchmark_curve: 'Passive Benchmark (Buy & Hold)',
+  current_holdings: 'Open Position Value',
+  available_cash: 'Available Cash',
+  daily_range: '24-Hour Range',
+  daily_high: '24h High',
+  daily_low: '24h Low',
+  current_price: 'Current Price',
+  live_status: 'LIVE',
 };
 
 export const toEnglishDigits = (input: string | number | null | undefined): string => {
@@ -740,19 +803,15 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const absVal = Math.abs(val);
     const valStr = formatLocalizedNumber(absVal, language, { decimals });
 
-    if (isNeg) {
-      return `-$${valStr}`;
-    }
-    if (showSign && val > 0) {
-      return `+$${valStr}`;
-    }
-    return `$${valStr}`;
+    const sign = isNeg ? '-' : showSign && val > 0 ? '+' : '';
+    // Use Unicode LTR marks so that in Persian RTL mode the minus/plus and dollar sign stay intact
+    return `\u200E${sign}$${valStr}\u200E`;
   };
 
   const formatPercent = (num: number | string | null | undefined, decimals = 1, showSign = true): string => {
     if (num === null || num === undefined || num === '') return '—';
     const valStr = formatLocalizedNumber(num, language, { decimals, showSign });
-    return language === 'fa' ? `${valStr}٪` : `${valStr}%`;
+    return language === 'fa' ? `\u200E${valStr}٪\u200E` : `\u200E${valStr}%\u200E`;
   };
 
   const formatDate = (dateInput: string | number | Date | null | undefined): string => {

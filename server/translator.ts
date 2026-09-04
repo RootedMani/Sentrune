@@ -109,6 +109,40 @@ const FINANCIAL_DICTIONARY: Record<string, string> = {
   'Federal Reserve': 'فدرال رزرو',
   'Wall Street': 'وال استریت',
   'consensus estimates': 'پیش‌بینی‌های تحلیلگران',
+  'market cap': 'ارزش بازار (Market Cap)',
+  'market capitalization': 'ارزش بازار سرمایه',
+  'circulating supply': 'عرضه در گردش',
+  'total supply': 'عرضه کل',
+  'hashrate': 'نرخ هش (هش‌ریت)',
+  'mining difficulty': 'سختی استخراج',
+  'yield curve': 'منحنی بازدهی اوراق',
+  'treasury yields': 'بازدهی اوراق خزانه',
+  'liquidity': 'نقدینگی',
+  'liquidity pools': 'استخرهای نقدینگی',
+  'take profit': 'حد سود (Take Profit)',
+  'stop loss': 'حد ضرر (Stop Loss)',
+  'risk to reward': 'نسبت ریسک به ریوارد',
+  'short squeeze': 'فشردگی استقراض (Short Squeeze)',
+  'long squeeze': 'فشردگی خرید (Long Squeeze)',
+  'order book': 'دفتر سفارشات',
+  'limit order': 'سفارش محدود (Limit)',
+  'market order': 'سفارش فوری بازار (Market)',
+  'slippage': 'لغزش قیمت (Slippage)',
+  'overbought': 'اشباع خرید',
+  'oversold': 'اشباع فروش',
+  'divergence': 'واگرایی',
+  'momentum': 'شتاب و مومنتوم',
+  'volatility': 'نوسان‌پذیری',
+  'implied volatility': 'نوسان ضمنی',
+  'quarterly results': 'نتایج فصلی',
+  'balance sheet': 'ترازنامه مالی',
+  'free cash flow': 'جریان نقدی آزاد',
+  'debt ceiling': 'سقف بدهی',
+  'crypto': 'ارز دیجیتال (کریپتو)',
+  'cryptocurrency': 'ارزهای دیجیتال',
+  'stablecoin': 'استیبل‌کوین',
+  'decentralized finance': 'امور مالی غیرمتمرکز (دیفای)',
+  'DeFi': 'امور مالی غیرمتمرکز (DeFi)',
 };
 
 /**
@@ -223,18 +257,34 @@ ${JSON.stringify(items.map((i) => ({ id: i.id, headline: i.headline, body: i.bod
 
 Return ONLY a valid JSON array of objects with keys: id, headline_fa, body_fa. No markdown formatting, no commentary.`;
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    let response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-120b',
+        model: 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.1,
       }),
     });
+
+    if (!response.ok) {
+      // Fallback to fast instant model if 70b hits rate limits
+      response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-8b-instant',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.1,
+        }),
+      });
+    }
 
     if (!response.ok) {
       console.warn('Groq translation API error:', response.statusText);
@@ -379,7 +429,7 @@ export async function translateSocialItems(
     if (getGeminiKeyPool().length > 0) {
       apiResults = await translateWithGemini(formattedForAI);
     }
-    if (!apiResults && process.env.GROQ_API_KEY) {
+    if (!apiResults && (process.env.GROQ_API_KEY || GROQ_KEYS_TRANSLATOR.length > 0)) {
       apiResults = await translateWithGroq(formattedForAI);
     }
   }

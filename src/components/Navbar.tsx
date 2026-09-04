@@ -230,10 +230,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
 
-            {/* Price Quote Badge */}
+            {/* Desktop Price Quote Badge */}
             {lastClose > 0 && (
               <div
-                className={`flex items-center gap-2 ${
+                className={`hidden md:flex items-center gap-2 ${
                   isRtl ? 'pr-3 border-r' : 'pl-3 border-l'
                 } border-slate-200 dark:border-slate-700/80 shrink-0 px-2 py-1 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 transition-colors duration-200`}
                 dir="ltr"
@@ -276,7 +276,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Right Side: Real-Time Indicator, Refresh, Language, and Theme Switcher */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Real-time streaming status indicator */}
           <RealtimeIndicator
             connectionStatus={connectionStatus}
@@ -293,7 +293,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             disabled={isRefreshing}
             id="btn-header-refresh"
             title={language === 'fa' ? 'به‌روزرسانی فوری داده‌ها و قیمت‌ها' : 'Force Market Refresh'}
-            className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+            className="px-2 sm:px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700/80 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span className="hidden md:inline">
@@ -308,7 +308,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={toggleLanguage}
             id="lang-toggle-btn-header"
             title={t('language_toggle')}
-            className="px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 transition-all flex items-center justify-center gap-1.5 text-xs font-medium cursor-pointer"
+            className="px-2 sm:px-3 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 transition-all flex items-center justify-center gap-1.5 text-xs font-medium cursor-pointer"
           >
             <Globe className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
             <span className={language === 'en' ? 'font-vazir text-xs font-semibold' : 'font-sans text-xs font-semibold'}>
@@ -339,11 +339,51 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
+      {/* Mobile-Only Secondary Price & Regime Strip - Clean, Never cramped */}
+      {lastClose > 0 && (
+        <div className="md:hidden px-4 py-1.5 bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0" dir="ltr">
+            <span
+              className={`text-sm font-bold font-mono transition-colors duration-200 ${
+                priceFlash === 'up'
+                  ? 'text-emerald-500 dark:text-emerald-400'
+                  : priceFlash === 'down'
+                  ? 'text-rose-500 dark:text-rose-400'
+                  : 'text-slate-900 dark:text-slate-100'
+              }`}
+            >
+              {formatCurrency(lastClose, lastClose > 10 ? 2 : 4)}
+            </span>
+            <span
+              className={`inline-flex items-center gap-0.5 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full ${
+                isPositive
+                  ? 'bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60'
+                  : 'bg-rose-50 dark:bg-rose-950/80 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60'
+              }`}
+            >
+              {isPositive ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+              <span>
+                {formatNumber(priceChange, { decimals: 2, showSign: true })} ({formatPercent(priceChangePct, 1, true)})
+              </span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span
+              className="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+              dir="ltr"
+            >
+              {selectedAsset?.exchange} · {language === 'fa' ? toPersianDigits(selectedInterval) : selectedInterval}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Sub-Bar: Dedicated Full-Width Tab Navigation with Interactive Slider Controls */}
       <div className="relative border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/80 backdrop-blur-xs flex items-center">
-        {/* Left scroll chevron button */}
+        {/* Left scroll chevron button (desktop only) */}
         {canScrollLeft && (
-          <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center pr-4 pl-1.5 bg-gradient-to-r from-slate-50 via-slate-50/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 dark:to-transparent pointer-events-auto">
+          <div className="hidden md:flex absolute left-0 top-0 bottom-0 z-10 items-center pr-4 pl-1.5 bg-gradient-to-r from-slate-50 via-slate-50/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 dark:to-transparent pointer-events-auto">
             <button
               onClick={handleScrollLeft}
               className="p-1 rounded-md bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 shadow-sm border border-slate-200 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 cursor-pointer"
@@ -364,7 +404,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
-          className={`px-4 sm:px-6 py-1.5 overflow-x-auto scrollbar-none flex items-center w-full select-none ${
+          className={`px-3 sm:px-6 py-1.5 overflow-x-auto scrollbar-none flex items-center w-full select-none ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab sm:cursor-default'
           }`}
         >
@@ -392,9 +432,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
         </div>
 
-        {/* Right scroll chevron button */}
+        {/* Right scroll chevron button (desktop only) */}
         {canScrollRight && (
-          <div className="absolute right-0 top-0 bottom-0 z-10 flex items-center pl-4 pr-1.5 bg-gradient-to-l from-slate-50 via-slate-50/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 dark:to-transparent pointer-events-auto">
+          <div className="hidden md:flex absolute right-0 top-0 bottom-0 z-10 items-center pl-4 pr-1.5 bg-gradient-to-l from-slate-50 via-slate-50/90 to-transparent dark:from-slate-900 dark:via-slate-900/90 dark:to-transparent pointer-events-auto">
             <button
               onClick={handleScrollRight}
               className="p-1 rounded-md bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 shadow-sm border border-slate-200 dark:border-slate-700 transition-all hover:scale-105 active:scale-95 cursor-pointer"

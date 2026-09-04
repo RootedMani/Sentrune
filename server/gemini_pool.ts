@@ -2,11 +2,11 @@ import { GoogleGenAI } from '@google/genai';
 
 /**
  * Gemini models configuration
- * gemini-3.6-flash is the primary high-throughput, stable production model.
- * gemini-3.8-flash acts as secondary when available.
+ * gemini-3.8-flash is the primary high-throughput, stable production model.
+ * gemini-flash-latest acts as secondary fallback when available.
  */
-export const GEMINI_PRIMARY_MODEL = 'gemini-3.6-flash';
-export const GEMINI_FALLBACK_MODELS = ['gemini-3.6-flash', 'gemini-3.8-flash'];
+export const GEMINI_PRIMARY_MODEL = 'gemini-3.8-flash';
+export const GEMINI_FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest'];
 export const GEMINI_MODEL = GEMINI_PRIMARY_MODEL;
 
 // Cache for initialized GoogleGenAI instances by API key
