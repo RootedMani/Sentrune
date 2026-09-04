@@ -1,11 +1,12 @@
 import { executeWithGeminiPool, getGeminiKeyPool, GEMINI_MODEL } from './gemini_pool.js';
 
 // Groq API Key Pool provided by user with round-robin rotation
+const rawEnvKey = (process.env.GROQ_API_KEY || '').trim().replace(/^["']|["']$/g, '');
 const GROQ_KEYS: string[] = [
   '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',
   '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',
   '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',
-  ...(process.env.GROQ_API_KEY ? [process.env.GROQ_API_KEY] : []),
+  ...(rawEnvKey && rawEnvKey.startsWith('gsk_') ? [rawEnvKey] : []),
 ];
 
 let groqKeyIndex = 0;
@@ -15,6 +16,13 @@ function getNextGroqKey(): string {
   const key = GROQ_KEYS[groqKeyIndex % GROQ_KEYS.length];
   groqKeyIndex++;
   return key;
+}
+
+function invalidateGroqKey(badKey: string) {
+  const idx = GROQ_KEYS.indexOf(badKey);
+  if (idx !== -1) {
+    GROQ_KEYS.splice(idx, 1);
+  }
 }
 
 // Model Benchmark Result interface
@@ -57,7 +65,8 @@ async function callGroqModel(
     if (!apiKey) continue;
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      // Allow up to 3500 max_tokens for reasoning models (e.g. gpt-oss-20b/120b) which spend 1200-1800 tokens on chain-of-thought
+      let response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,10 +79,43 @@ async function callGroqModel(
             { role: 'user', content: prompt },
           ],
           temperature: 0.15,
-          max_tokens: 1000,
+          max_tokens: 3500,
           response_format: { type: 'json_object' },
         }),
       });
+
+      if (response.status === 401 || response.status === 403) {
+        console.warn(`Groq key ${apiKey.slice(0, 12)}... rejected with status ${response.status}. Ejecting from active pool.`);
+        invalidateGroqKey(apiKey);
+        continue;
+      }
+
+      // If json_validate_failed (status 400), retry without strict json_object constraint so reasoning tokens don't conflict
+      if (response.status === 400) {
+        const errText = await response.text();
+        if (errText.includes('json_validate_failed')) {
+          response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model,
+              messages: [
+                { role: 'system', content: systemPrompt + ' You must output ONLY a valid JSON object, with no conversational preamble or markdown backticks.' },
+                { role: 'user', content: prompt },
+              ],
+              temperature: 0.15,
+              max_tokens: 3500,
+            }),
+          });
+        } else {
+          console.warn(`Groq key failure on model ${model}: status ${response.status}`, errText);
+          lastError = new Error(`Groq HTTP ${response.status}: ${errText}`);
+          continue;
+        }
+      }
 
       if (!response.ok) {
         const errBody = await response.text();

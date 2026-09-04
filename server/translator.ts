@@ -223,11 +223,12 @@ function translateFinancialWord(word: string): string {
   return FINANCIAL_DICTIONARY[trimmed] || FINANCIAL_DICTIONARY[trimmed.toLowerCase()] || trimmed;
 }
 
+const rawEnvTransKey = (process.env.GROQ_API_KEY || '').trim().replace(/^["']|["']$/g, '');
 const GROQ_KEYS_TRANSLATOR: string[] = [
   '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',
   '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',
   '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',
-  ...(process.env.GROQ_API_KEY ? [process.env.GROQ_API_KEY] : []),
+  ...(rawEnvTransKey && rawEnvTransKey.startsWith('gsk_') ? [rawEnvTransKey] : []),
 ];
 
 let groqTransKeyIndex = 0;
@@ -236,6 +237,13 @@ function getNextGroqTransKey(): string {
   const key = GROQ_KEYS_TRANSLATOR[groqTransKeyIndex % GROQ_KEYS_TRANSLATOR.length];
   groqTransKeyIndex++;
   return key;
+}
+
+function invalidateGroqTransKey(badKey: string) {
+  const idx = GROQ_KEYS_TRANSLATOR.indexOf(badKey);
+  if (idx !== -1) {
+    GROQ_KEYS_TRANSLATOR.splice(idx, 1);
+  }
 }
 
 /**
@@ -267,8 +275,15 @@ Return ONLY a valid JSON array of objects with keys: id, headline_fa, body_fa. N
         model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.1,
+        max_tokens: 2500,
       }),
     });
+
+    if (response.status === 401 || response.status === 403) {
+      console.warn(`Groq translation key ${apiKey.slice(0, 12)}... invalid (${response.status}). Ejecting from pool.`);
+      invalidateGroqTransKey(apiKey);
+      return null;
+    }
 
     if (!response.ok) {
       // Fallback to high-velocity 20B model if 120B hits rate limits or is busy
@@ -282,8 +297,15 @@ Return ONLY a valid JSON array of objects with keys: id, headline_fa, body_fa. N
           model: 'openai/gpt-oss-20b',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.1,
+          max_tokens: 2500,
         }),
       });
+
+      if (response.status === 401 || response.status === 403) {
+        console.warn(`Groq translation key ${apiKey.slice(0, 12)}... invalid (${response.status}). Ejecting from pool.`);
+        invalidateGroqTransKey(apiKey);
+        return null;
+      }
     }
 
     if (!response.ok) {
