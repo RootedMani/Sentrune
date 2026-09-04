@@ -278,9 +278,14 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
               {formatPercent(sim.winRatePct, 1, false)}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-              {language === 'fa'
-                ? `${toPersianDigits(sim.winningTrades)}W / ${toPersianDigits(sim.losingTrades)}L (${toPersianDigits(sim.totalTrades)} معامله)`
-                : `${sim.winningTrades}W / ${sim.losingTrades}L (${sim.totalTrades} trades)`}
+              {(() => {
+                const closedTrades = sim.totalClosedTrades ?? (sim.winningTrades + sim.losingTrades);
+                const openTrades = sim.totalTrades > closedTrades ? sim.totalTrades - closedTrades : 0;
+                if (language === 'fa') {
+                  return `${toPersianDigits(sim.winningTrades)}W / ${toPersianDigits(sim.losingTrades)}L (${toPersianDigits(closedTrades)} معامله بسته شده${openTrades > 0 ? ` + ${toPersianDigits(openTrades)} باز` : ''})`;
+                }
+                return `${sim.winningTrades}W / ${sim.losingTrades}L (${closedTrades} closed${openTrades > 0 ? `, ${openTrades} open` : ''})`;
+              })()}
             </div>
           </div>
 
@@ -306,7 +311,11 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
               -{formatPercent(sim.maxDrawdownPct, 2, false)}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-              {language === 'fa' ? 'کنترل دقیق ریسک' : 'Tight risk containment'}
+              {sim.maxDrawdownPct > 35
+                ? (language === 'fa' ? 'افت سرمایه و نوسان شدید' : 'Elevated drawdown / high volatility')
+                : sim.maxDrawdownPct > 15
+                ? (language === 'fa' ? 'افت سرمایه متوسط' : 'Moderate capital drawdown')
+                : (language === 'fa' ? 'مهار دقیق ریسک' : 'Tight risk containment')}
             </div>
           </div>
 
@@ -769,7 +778,7 @@ export const AiSimulationReport: React.FC<AiSimulationReportProps> = ({
                   <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-between items-center">
                     <span className="text-slate-500">{language === 'fa' ? 'نرخ برد:' : 'Win Rate:'}</span>
                     <span className="font-mono font-bold">
-                      {formatPercent(sim.winRatePct, 1, false)} ({language === 'fa' ? `${toPersianDigits(sim.winningTrades)}/${toPersianDigits(sim.totalTrades)}` : `${sim.winningTrades}/${sim.totalTrades}`})
+                      {formatPercent(sim.winRatePct, 1, false)} ({language === 'fa' ? `${toPersianDigits(sim.winningTrades)}/${toPersianDigits(sim.totalClosedTrades ?? (sim.winningTrades + sim.losingTrades))}` : `${sim.winningTrades}/${sim.totalClosedTrades ?? (sim.winningTrades + sim.losingTrades)}`})
                     </span>
                   </div>
                   <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 flex justify-between items-center">

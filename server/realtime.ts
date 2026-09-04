@@ -308,9 +308,21 @@ function updateAssetBar(
     if (bars.length > 0) {
       bars.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
       const lb = bars[bars.length - 1];
-      lb.close = close;
-      lb.high = Math.max(lb.high, close);
-      lb.low = Math.min(lb.low, close);
+      if (lb && lb.close > 0) {
+        const ratio = close / lb.close;
+        if (ratio < 0.85 || ratio > 1.15) {
+          bars.forEach((b) => {
+            b.open = parseFloat((b.open * ratio).toFixed(2));
+            b.high = parseFloat((b.high * ratio).toFixed(2));
+            b.low = parseFloat((b.low * ratio).toFixed(2));
+            b.close = parseFloat((b.close * ratio).toFixed(2));
+          });
+        } else {
+          lb.close = close;
+          lb.high = Math.max(lb.high, close);
+          lb.low = Math.min(lb.low, close);
+        }
+      }
     }
   }
 

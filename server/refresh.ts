@@ -394,10 +394,20 @@ export async function runIngestionAndFeatures(): Promise<Record<string, number>>
       } else if (latest1d && (iv === '1h' || iv === '1wk')) {
         const sorted = [...bars].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
         const lastBar = sorted[sorted.length - 1];
-        if (lastBar) {
-          lastBar.close = latest1d.close;
-          lastBar.high = Math.max(lastBar.high, latest1d.close);
-          lastBar.low = Math.min(lastBar.low, latest1d.close);
+        if (lastBar && lastBar.close > 0) {
+          const ratio = latest1d.close / lastBar.close;
+          if (ratio < 0.85 || ratio > 1.15) {
+            sorted.forEach((b) => {
+              b.open = parseFloat((b.open * ratio).toFixed(2));
+              b.high = parseFloat((b.high * ratio).toFixed(2));
+              b.low = parseFloat((b.low * ratio).toFixed(2));
+              b.close = parseFloat((b.close * ratio).toFixed(2));
+            });
+          } else {
+            lastBar.close = latest1d.close;
+            lastBar.high = Math.max(lastBar.high, latest1d.close);
+            lastBar.low = Math.min(lastBar.low, latest1d.close);
+          }
         }
       }
 

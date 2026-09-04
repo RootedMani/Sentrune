@@ -23,6 +23,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { RealtimeIndicator } from './RealtimeIndicator';
 import { RealtimeConnectionStatus } from '../types';
+import { AlpacaModal } from './AlpacaModal';
 
 interface NavbarProps {
   activeTab: string;
@@ -65,6 +66,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const { isDark, toggleTheme } = useTheme();
   const { language, toggleLanguage, t, isRtl, formatCurrency, formatNumber, formatPercent, toPersianDigits } = useLanguage();
+  const [isAlpacaOpen, setIsAlpacaOpen] = useState(false);
 
   const tabs = [
     {
@@ -303,6 +305,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
+          {/* Alpaca Paper Trading Button */}
+          <button
+            onClick={() => setIsAlpacaOpen(true)}
+            id="btn-header-alpaca"
+            title={language === 'fa' ? 'مدیریت و اتصال حساب آلپاکا' : 'Alpaca Brokerage & Paper Trading'}
+            className="px-2 sm:px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <span className="text-xs">🦙</span>
+            <span className="hidden sm:inline text-[11px] font-bold">Alpaca</span>
+          </button>
+
           {/* Language Switcher */}
           <button
             onClick={toggleLanguage}
@@ -446,6 +459,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         )}
       </div>
+
+      {/* Alpaca Paper Trading Modal */}
+      <AlpacaModal
+        isOpen={isAlpacaOpen}
+        onClose={() => setIsAlpacaOpen(false)}
+        defaultSymbol={selectedAsset?.symbol || 'AAPL'}
+      />
     </header>
   );
 };

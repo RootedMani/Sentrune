@@ -243,16 +243,20 @@ export function generatePriceHistory(
     currentPrice = close;
   }
 
+  // Anchor the entire trajectory smoothly to basePrice at today's candle
+  const endClose = tempBars[tempBars.length - 1]?.close || basePrice;
+  const scale = endClose > 0 ? basePrice / endClose : 1;
+
   tempBars.forEach((tb, idx) => {
     bars.push({
       id: idx + 1,
       asset_id: assetId,
       interval,
       timestamp: tb.date.toISOString(),
-      open: tb.open,
-      high: tb.high,
-      low: tb.low,
-      close: tb.close,
+      open: parseFloat((tb.open * scale).toFixed(2)),
+      high: parseFloat((tb.high * scale).toFixed(2)),
+      low: parseFloat((tb.low * scale).toFixed(2)),
+      close: parseFloat((tb.close * scale).toFixed(2)),
       volume: tb.volume,
       source,
     });
@@ -318,10 +322,10 @@ export function getDatabase(): DatabaseState {
   let barIdCounter = 1;
 
   const assetConfigs = [
-    { id: 1, basePrice: 218.5, vol: 0.018, source: 'yfinance' },
-    { id: 2, basePrice: 432.0, vol: 0.016, source: 'yfinance' },
-    { id: 3, basePrice: 59500.0, vol: 0.035, source: 'binance' },
-    { id: 4, basePrice: 2520.0, vol: 0.042, source: 'binance' },
+    { id: 1, basePrice: 328.21, vol: 0.018, source: 'yfinance' },
+    { id: 2, basePrice: 510.12, vol: 0.016, source: 'yfinance' },
+    { id: 3, basePrice: 81060.0, vol: 0.035, source: 'binance' },
+    { id: 4, basePrice: 2518.0, vol: 0.042, source: 'binance' },
   ];
 
   const intervals: ('1d' | '1h' | '1wk')[] = ['1d', '1h', '1wk'];

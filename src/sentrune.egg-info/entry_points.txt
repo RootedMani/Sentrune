@@ -1,4 +1,0 @@
-[console_scripts]
-feature-compute = trading_assistant.features.compute:main
-model-train = trading_assistant.modeling.compute:main
-trading-ingest = trading_assistant.ingest.pipeline:main

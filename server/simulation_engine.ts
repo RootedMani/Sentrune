@@ -42,6 +42,7 @@ export interface SimulationResults {
   benchmarkReturnPct: number;
   alphaPct: number;
   totalTrades: number;
+  totalClosedTrades: number;
   winningTrades: number;
   losingTrades: number;
   winRatePct: number;
@@ -86,6 +87,7 @@ export function runPortfolioSimulation(
       benchmarkReturnPct: 0,
       alphaPct: 0,
       totalTrades: 0,
+      totalClosedTrades: 0,
       winningTrades: 0,
       losingTrades: 0,
       winRatePct: 0,
@@ -364,6 +366,7 @@ export function runPortfolioSimulation(
     benchmarkReturnPct: parseFloat(benchmarkReturnPct.toFixed(2)),
     alphaPct: parseFloat(alphaPct.toFixed(2)),
     totalTrades: trades.length,
+    totalClosedTrades,
     winningTrades: winningTradesCount,
     losingTrades: losingTradesCount,
     winRatePct: parseFloat(winRatePct.toFixed(1)),

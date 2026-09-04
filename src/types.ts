@@ -265,6 +265,7 @@ export interface SimulationResults {
   benchmarkReturnPct: number;
   alphaPct: number;
   totalTrades: number;
+  totalClosedTrades?: number;
   winningTrades: number;
   losingTrades: number;
   winRatePct: number;
