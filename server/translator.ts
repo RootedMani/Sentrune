@@ -376,7 +376,7 @@ export async function translateNewsItems(
       apiResults = await translateWithGemini(missingItems);
     }
     // 2. Try Groq if Gemini failed or wasn't configured
-    if (!apiResults && process.env.GROQ_API_KEY) {
+    if (!apiResults && (process.env.GROQ_API_KEY || GROQ_KEYS_TRANSLATOR.length > 0)) {
       apiResults = await translateWithGroq(missingItems);
     }
   }
