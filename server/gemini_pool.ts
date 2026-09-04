@@ -3,10 +3,10 @@ import { GoogleGenAI } from '@google/genai';
 /**
  * Gemini models configuration
  * gemini-3.8-flash is the primary high-throughput, stable production model.
- * gemini-flash-latest acts as secondary fallback when available.
+ * gemini-3.1-flash-lite and gemini-flash-latest act as secondary fallbacks.
  */
 export const GEMINI_PRIMARY_MODEL = 'gemini-3.8-flash';
-export const GEMINI_FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-flash-latest'];
+export const GEMINI_FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-flash-latest'];
 export const GEMINI_MODEL = GEMINI_PRIMARY_MODEL;
 
 // Cache for initialized GoogleGenAI instances by API key
@@ -138,8 +138,8 @@ export async function executeWithGeminiPool<T>(
         const is429 = errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED');
 
         if (is503HighDemand) {
-          // Put the model on circuit breaker cooldown for 10 minutes and cascade immediately
-          modelCooldowns.set(modelToUse, Date.now() + 10 * 60 * 1000);
+          // Put the model on circuit breaker cooldown for 30 seconds and cascade immediately
+          modelCooldowns.set(modelToUse, Date.now() + 30 * 1000);
           console.info(`[Gemini Pool] Model ${modelToUse} experiencing upstream high demand (503). Switching to standby model.`);
           break; // Immediately break to the next model in GEMINI_FALLBACK_MODELS
         }

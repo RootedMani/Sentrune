@@ -3,11 +3,13 @@ services:
     name: sentrune-dashboard
     runtime: node
     plan: starter
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --no-audit --no-fund && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
         value: 20.18.0
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=460
       - key: NODE_ENV
         value: production
       - key: PORT

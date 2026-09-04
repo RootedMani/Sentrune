@@ -378,22 +378,22 @@ Synthesize the multi-indicator signals, momentum inflection, and sentiment tone.
   // Candidate models to benchmark in tournament
   const candidateConfigs = [
     {
-      id: 'llama-3.3-70b-versatile',
-      name: 'Llama 3.3 70B Versatile (Groq LPU)',
+      id: 'openai/gpt-oss-120b',
+      name: 'OpenAI GPT OSS 120B (Groq LPU)',
       provider: 'groq' as const,
-      modelTag: 'llama-3.3-70b-versatile',
+      modelTag: 'openai/gpt-oss-120b',
     },
     {
-      id: 'llama-3.1-8b-instant',
-      name: 'Llama 3.1 8B Instant (Groq LPU)',
+      id: 'qwen/qwen3.8-27b',
+      name: 'Qwen 3.8 27B Fast Reasoning (Groq LPU)',
       provider: 'groq' as const,
-      modelTag: 'llama-3.1-8b-instant',
+      modelTag: 'qwen/qwen3.8-27b',
     },
     {
-      id: 'gemma2-9b-it',
-      name: 'Google Gemma 2 9B (Groq LPU)',
+      id: 'openai/gpt-oss-20b',
+      name: 'OpenAI GPT OSS 20B High-Velocity (Groq LPU)',
       provider: 'groq' as const,
-      modelTag: 'gemma2-9b-it',
+      modelTag: 'openai/gpt-oss-20b',
     },
     {
       id: 'gemini-3.8-flash',

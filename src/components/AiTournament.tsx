@@ -73,8 +73,8 @@ export const AiTournament: React.FC<AiTournamentProps> = ({
             </h2>
             <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
               {language === 'fa'
-                ? 'ارزیابی همزمان بازار توسط مدل‌های پیشرفته Llama 3.3 70B، Llama 3.1 8B و Gemma 2 9B روی پردازنده‌های LPU شرکت Groq و Google Gemini 3.8 Flash همراه با استخراج سیگنال‌های کمّی.'
-                : 'Live multi-model inference benchmarking across Llama 3.3 70B, Llama 3.1 8B, and Gemma 2 9B on Groq LPUs alongside Google Gemini 3.8 Flash and quantitative ensembles.'}
+                ? 'ارزیابی همزمان بازار توسط مدل‌های پیشرفته GPT OSS 120B، Qwen 3.8 27B و GPT OSS 20B روی پردازنده‌های LPU شرکت Groq و Google Gemini 3.8 Flash همراه با استخراج سیگنال‌های کمّی.'
+                : 'Live multi-model inference benchmarking across OpenAI GPT OSS 120B, Qwen 3.8 27B, and GPT OSS 20B on Groq LPUs alongside Google Gemini 3.8 Flash and quantitative ensembles.'}
             </p>
           </div>
 

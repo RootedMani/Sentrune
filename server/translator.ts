@@ -264,14 +264,14 @@ Return ONLY a valid JSON array of objects with keys: id, headline_fa, body_fa. N
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.1,
       }),
     });
 
     if (!response.ok) {
-      // Fallback to fast instant model if 70b hits rate limits
+      // Fallback to high-velocity 20B model if 120B hits rate limits or is busy
       response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -279,7 +279,7 @@ Return ONLY a valid JSON array of objects with keys: id, headline_fa, body_fa. N
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
+          model: 'openai/gpt-oss-20b',
           messages: [{ role: 'user', content: prompt }],
           temperature: 0.1,
         }),
@@ -287,7 +287,8 @@ Return ONLY a valid JSON array of objects with keys: id, headline_fa, body_fa. N
     }
 
     if (!response.ok) {
-      console.warn('Groq translation API error:', response.statusText);
+      const errBody = await response.text().catch(() => '');
+      console.warn(`Groq translation API error (${response.status}):`, errBody || response.statusText);
       return null;
     }
 
