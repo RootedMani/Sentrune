@@ -21,14 +21,6 @@ import {
   triggerInitialSync,
   fetchFastLiveQuotes,
 } from './server/realtime.js';
-import {
-  isAlpacaConfigured,
-  getAlpacaConfig,
-  getAlpacaAccount,
-  getAlpacaPositions,
-  getAlpacaOrders,
-  placeAlpacaOrder,
-} from './server/alpaca.js';
 
 async function startServer() {
   const app = express();
@@ -533,88 +525,7 @@ async function startServer() {
     }
   });
 
-  // API 15: Alpaca Brokerage & Paper Trading
-  app.get('/api/alpaca/status', async (req: Request, res: Response) => {
-    try {
-      const config = getAlpacaConfig();
-      if (!config.isConfigured) {
-        return res.json({
-          configured: false,
-          isPaper: config.isPaper,
-          message: 'Alpaca API keys not detected. Configure ALPACA_API_KEY and ALPACA_API_SECRET.',
-        });
-      }
-      const account = await getAlpacaAccount();
-      res.json({
-        configured: true,
-        isPaper: config.isPaper,
-        baseUrl: config.baseUrl,
-        keyPreview: config.keyPreview,
-        account,
-      });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message || 'Failed to check Alpaca status' });
-    }
-  });
-
-  app.get('/api/alpaca/account', async (req: Request, res: Response) => {
-    try {
-      const account = await getAlpacaAccount();
-      if (!account) {
-        return res.status(400).json({ error: 'Alpaca account unavailable or keys invalid' });
-      }
-      res.json({ success: true, account });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message || 'Failed to fetch Alpaca account' });
-    }
-  });
-
-  app.get('/api/alpaca/positions', async (req: Request, res: Response) => {
-    try {
-      const positions = await getAlpacaPositions();
-      res.json({ success: true, positions });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message || 'Failed to fetch Alpaca positions' });
-    }
-  });
-
-  app.get('/api/alpaca/orders', async (req: Request, res: Response) => {
-    try {
-      const status = (req.query.status as any) || 'all';
-      const orders = await getAlpacaOrders(status);
-      res.json({ success: true, orders });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message || 'Failed to fetch Alpaca orders' });
-    }
-  });
-
-  app.post('/api/alpaca/order', async (req: Request, res: Response) => {
-    try {
-      const { symbol, qty, side, type, time_in_force, limit_price } = req.body;
-      if (!symbol || !qty || !side) {
-        return res.status(400).json({ error: 'symbol, qty, and side are required' });
-      }
-
-      const result = await placeAlpacaOrder({
-        symbol,
-        qty: parseFloat(qty),
-        side,
-        type,
-        time_in_force,
-        limit_price: limit_price ? parseFloat(limit_price) : undefined,
-      });
-
-      if (!result.success) {
-        return res.status(400).json({ error: result.error });
-      }
-
-      res.json({ success: true, order: result.order });
-    } catch (err: any) {
-      res.status(500).json({ error: err.message || 'Alpaca order placement failed' });
-    }
-  });
-
-  // API 16: Refresh pipeline with real-time broadcast
+  // API 15: Refresh pipeline with real-time broadcast
   app.post('/api/refresh', async (req: Request, res: Response) => {
     try {
       await triggerInitialSync();

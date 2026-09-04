@@ -1,6 +1,6 @@
 {
   "name": "Sentrune",
-  "description": "Market intelligence and real-time trading assistant with automated data refresh mechanism",
+  "description": "Explainable market intelligence and alerting with Alpaca API paper trading and market data coverage.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
