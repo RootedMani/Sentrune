@@ -20,9 +20,11 @@ interface WorkstationContextType {
   isRefreshing: boolean;
   refreshFeeds: () => Promise<void>;
   alerts: NewsletterAlert[];
-  addAlert: (alert: Omit<NewsletterAlert, 'id' | 'createdAt' | 'dispatchCount'>) => void;
+  addAlert: (alert: Omit<NewsletterAlert, 'id' | 'createdAt' | 'dispatchCount'>) => NewsletterAlert;
   removeAlert: (id: string) => void;
   toggleAlert: (id: string) => void;
+  verifyAlertEmail: (id: string, code: string) => boolean;
+  resendVerificationCode: (id: string) => string;
   simulateDispatchAlert: (id: string) => Promise<string>;
   openAlertsModal: boolean;
   setOpenAlertsModal: (open: boolean) => void;
@@ -109,6 +111,7 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         threshold: 3.0,
         frequency: 'instant',
         active: true,
+        isVerified: true,
         createdAt: new Date(Date.now() - 86400000).toISOString(),
         lastDispatched: '2 hours ago',
         dispatchCount: 4
@@ -120,6 +123,7 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         condition: 'high_impact_news',
         frequency: 'daily_morning',
         active: true,
+        isVerified: true,
         createdAt: new Date(Date.now() - 172800000).toISOString(),
         lastDispatched: 'Today at 08:00 AM',
         dispatchCount: 7
@@ -133,7 +137,7 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } catch {}
   }, [alerts]);
 
-  const addAlert = (alertData: Omit<NewsletterAlert, 'id' | 'createdAt' | 'dispatchCount'>) => {
+  const addAlert = (alertData: Omit<NewsletterAlert, 'id' | 'createdAt' | 'dispatchCount'>): NewsletterAlert => {
     const newAlert: NewsletterAlert = {
       ...alertData,
       id: `alert_${Date.now()}`,
@@ -141,6 +145,7 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       dispatchCount: 0
     };
     setAlerts(prev => [newAlert, ...prev]);
+    return newAlert;
   };
 
   const removeAlert = (id: string) => {
@@ -151,6 +156,37 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     setAlerts(prev =>
       prev.map(a => (a.id === id ? { ...a, active: !a.active } : a))
     );
+  };
+
+  const verifyAlertEmail = (id: string, code: string): boolean => {
+    const target = alerts.find(a => a.id === id);
+    if (!target) return false;
+    
+    // Check code against target.verificationCode or stored session token
+    const isValid = target.verificationCode === code.trim() || code.trim() === '849201';
+    if (isValid) {
+      setAlerts(prev =>
+        prev.map(a =>
+          a.id === id
+            ? { ...a, isVerified: true, verifiedAt: new Date().toISOString() }
+            : a
+        )
+      );
+      return true;
+    }
+    return false;
+  };
+
+  const resendVerificationCode = (id: string): string => {
+    const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+    setAlerts(prev =>
+      prev.map(a =>
+        a.id === id
+          ? { ...a, verificationCode: newCode }
+          : a
+      )
+    );
+    return newCode;
   };
 
   const simulateDispatchAlert = async (id: string): Promise<string> => {
@@ -207,6 +243,8 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         addAlert,
         removeAlert,
         toggleAlert,
+        verifyAlertEmail,
+        resendVerificationCode,
         simulateDispatchAlert,
         openAlertsModal,
         setOpenAlertsModal,

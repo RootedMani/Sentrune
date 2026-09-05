@@ -50,6 +50,7 @@ export interface UserAccount {
   tier: 'demo' | 'full';
   watchlist: string[];
   createdAt: string;
+  isVerified?: boolean;
 }
 
 export type AlertTriggerCondition = 
@@ -70,6 +71,9 @@ export interface NewsletterAlert {
   createdAt: string;
   lastDispatched?: string;
   dispatchCount: number;
+  isVerified: boolean;
+  verificationCode?: string;
+  verifiedAt?: string;
 }
 
 export type AppMode = 'casual' | 'power';
