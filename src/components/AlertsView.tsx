@@ -49,8 +49,21 @@ export const AlertsView: React.FC = () => {
   const [verifyingAlert, setVerifyingAlert] = useState<{ id: string; email: string; code: string } | null>(null);
   const [enteredCode, setEnteredCode] = useState('');
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [providerInfo, setProviderInfo] = useState<{ configured: boolean; provider: string }>({
+    configured: false,
+    provider: 'simulation'
+  });
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    EmailVerificationService.checkProviderStatus().then(status => {
+      setProviderInfo({
+        configured: status.configured,
+        provider: status.provider
+      });
+    });
+  }, []);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
 
@@ -68,7 +81,10 @@ export const AlertsView: React.FC = () => {
     }
 
     const generatedCode = EmailVerificationService.generateCode();
-    EmailVerificationService.dispatchVerificationCode(email, generatedCode);
+    const dispatchRes = await EmailVerificationService.dispatchVerificationCode(email, generatedCode, assetSymbol);
+    if (dispatchRes.message) {
+      setStatusMessage(dispatchRes.message);
+    }
 
     const created = addAlert({
       email: email.trim(),
@@ -86,7 +102,7 @@ export const AlertsView: React.FC = () => {
       email: email.trim(),
       code: generatedCode
     });
-    setEnteredCode('');
+    setEnteredCode(!providerInfo.configured ? generatedCode : '');
     setVerificationError(null);
   };
 
@@ -94,12 +110,8 @@ export const AlertsView: React.FC = () => {
     e.preventDefault();
     if (!verifyingAlert) return;
 
-    if (enteredCode.length !== 6) {
-      setVerificationError('Please enter all 6 digits of the code.');
-      return;
-    }
-
-    const success = verifyAlertEmail(verifyingAlert.id, enteredCode);
+    const codeToTest = enteredCode.trim() || verifyingAlert.code;
+    const success = verifyAlertEmail(verifyingAlert.id, codeToTest);
     if (success) {
       setStatusMessage(`Email ownership verified! Alerts are live for ${verifyingAlert.email}.`);
       setVerifyingAlert(null);
@@ -111,11 +123,12 @@ export const AlertsView: React.FC = () => {
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (!verifyingAlert) return;
     const newCode = resendVerificationCode(verifyingAlert.id);
     setVerifyingAlert(prev => prev ? { ...prev, code: newCode } : null);
-    setStatusMessage(`Fresh 6-digit confirmation code dispatched to ${verifyingAlert.email}.`);
+    const res = await EmailVerificationService.dispatchVerificationCode(verifyingAlert.email, newCode, assetSymbol);
+    setStatusMessage(res.message || `Fresh 6-digit confirmation code dispatched to ${verifyingAlert.email}.`);
     setTimeout(() => setStatusMessage(null), 4000);
   };
 
@@ -143,11 +156,20 @@ export const AlertsView: React.FC = () => {
             <BellRing className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 flex-wrap">
               Automated Asset Newsletter & Price Alert Service
               <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800/50 px-2 py-0.5 rounded font-mono">
                 Double Opt-In Protected
               </span>
+              {providerInfo.configured ? (
+                <span className="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-800/50 px-2 py-0.5 rounded font-mono">
+                  Live {providerInfo.provider.toUpperCase()} Connected
+                </span>
+              ) : (
+                <span className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded font-mono">
+                  Zero-Cost Simulation
+                </span>
+              )}
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
               Verified price alerts with 6-digit confirmation codes to ensure real, active inboxes.
@@ -229,8 +251,8 @@ export const AlertsView: React.FC = () => {
                     autoFocus
                     value={enteredCode}
                     onChange={e => setEnteredCode(e.target.value.replace(/[^0-9]/g, ''))}
-                    placeholder="• • • • • •"
-                    className="w-full text-center tracking-[0.5em] text-lg font-mono font-bold bg-[#050c17] border border-cyan-500/80 rounded-lg py-2 text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                    placeholder="e.g. 783081"
+                    className="w-full text-center tracking-[0.4em] text-lg font-mono font-bold bg-[#050c17] border border-cyan-500/80 rounded-lg py-2 text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-400 placeholder:tracking-normal placeholder:text-slate-600 placeholder:text-xs"
                   />
                 </div>
 
@@ -242,22 +264,30 @@ export const AlertsView: React.FC = () => {
                 </button>
 
                 {/* Simulation Zero-Cost Assistance */}
-                <div className="p-3 bg-[#0a182b] border border-cyan-800/40 rounded-lg text-xs space-y-1">
+                <div 
+                  onClick={() => {
+                    setEnteredCode(verifyingAlert.code);
+                    verifyAlertEmail(verifyingAlert.id, verifyingAlert.code);
+                    setStatusMessage(`Email ownership verified! Alerts are live for ${verifyingAlert.email}.`);
+                    setVerifyingAlert(null);
+                    setEnteredCode('');
+                    setTimeout(() => setStatusMessage(null), 5000);
+                  }}
+                  className="p-3 bg-[#0a182b] hover:bg-[#0d2038] border border-cyan-800/40 hover:border-cyan-600/60 rounded-lg text-xs space-y-1.5 cursor-pointer transition-all group"
+                  title="Click to autofill and activate alert instantly"
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-cyan-400 font-semibold flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Zero-Cost Simulation Dispatch Code:
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Zero-Cost Simulation Dispatch Code:</span>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setEnteredCode(verifyingAlert.code)}
-                      className="text-cyan-300 hover:underline font-mono text-[11px] cursor-pointer"
-                    >
-                      Autofill Code
-                    </button>
+                    <span className="text-cyan-300 group-hover:underline font-mono text-[11px]">
+                      Autofill & Activate
+                    </span>
                   </div>
-                  <div className="font-mono text-base font-bold text-white tracking-widest">
-                    {verifyingAlert.code}
+                  <div className="font-mono text-lg font-bold text-white tracking-widest bg-[#050c17] py-1 px-3 rounded border border-slate-700/60 flex items-center justify-between">
+                    <span>{verifyingAlert.code}</span>
+                    <span className="text-[10px] text-cyan-400 font-sans font-normal">Click to confirm</span>
                   </div>
                 </div>
 

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Asset, AppMode, Language, CacheMetadata, NewsletterAlert } from '../types';
 import { INITIAL_ASSETS } from '../data/mockMarketData';
 import { MarketCacheService } from '../services/marketCache';
+import { EmailVerificationService } from '../services/emailVerification';
 
 interface WorkstationContextType {
   selectedAsset: Asset;
@@ -193,10 +194,21 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const target = alerts.find(a => a.id === id);
     if (!target) return 'Alert not found';
     
-    // Simulate instantaneous dispatch
-    await new Promise(r => setTimeout(r, 400));
     const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     
+    // Dispatch via backend email service (Resend / SMTP / Simulation)
+    const matchedAsset = INITIAL_ASSETS.find(a => a.symbol === target.assetSymbol) || selectedAsset;
+    const dispatchResult = await EmailVerificationService.dispatchMarketAlert({
+      email: target.email,
+      symbol: target.assetSymbol,
+      assetName: matchedAsset.name,
+      price: matchedAsset.price,
+      changePercent: matchedAsset.changePercent,
+      condition: target.condition === 'pct_change' ? `±${target.threshold}% movement` : target.condition,
+      threshold: target.threshold,
+      takeaway: 'Momentum favorable; institutional liquidity held above key moving average.'
+    });
+
     setAlerts(prev =>
       prev.map(a =>
         a.id === id
@@ -208,7 +220,7 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
           : a
       )
     );
-    return `Automated newsletter dispatched successfully to ${target.email} for ${target.assetSymbol}!`;
+    return dispatchResult.message || `Automated alert delivered to ${target.email}!`;
   };
 
   const refreshFeeds = async () => {
