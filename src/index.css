@@ -1,102 +1,31 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @layer base {
-  :root {
-    --bg-primary: #f8fafc;
-    --bg-surface: #ffffff;
-    --bg-surface-elevated: #f1f5f9;
-    --border-subtle: #e2e8f0;
-    --border-strong: #cbd5e1;
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    --accent-cyan: #0284c7;
-    --accent-emerald: #059669;
-    --accent-rose: #e11d48;
-    --accent-amber: #d97706;
-  }
-
-  html.dark {
-    --bg-primary: #080d1a;
-    --bg-surface: #0f172a;
-    --bg-surface-elevated: #162036;
-    --border-subtle: #1e293b;
-    --border-strong: #334155;
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-    --accent-cyan: #06b6d4;
-    --accent-emerald: #10b981;
-    --accent-rose: #f43f5e;
-    --accent-amber: #f59e0b;
-  }
-
   body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    transition: background-color 0.2s ease, color 0.2s ease;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
-
-  /* Persian / Vazir Font styling */
-  html[lang="fa"],
-  html[dir="rtl"],
-  .font-vazir,
+  
   [dir="rtl"] {
-    font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif !important;
-    font-feature-settings: "ss01" on, "cv01" on !important;
-    letter-spacing: normal !important;
-    line-height: 1.6;
+    font-family: 'Vazirmatn', 'Plus Jakarta Sans', sans-serif;
   }
 
-  /* Ensure financial chart axes preserve chronological order while tooltips render RTL */
-  [dir="rtl"] .recharts-responsive-container {
-    direction: ltr;
-  }
-
-  [dir="rtl"] .recharts-default-tooltip {
-    direction: rtl;
-    text-align: right;
-  }
-
-  [dir="rtl"] .font-mono {
-    font-family: 'Vazirmatn', 'JetBrains Mono', monospace;
-    font-feature-settings: "ss01" on !important;
-  }
-
-  /* Latin / English default font */
-  html[lang="en"],
-  .font-latin {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
   }
 }
 
-/* Custom scrollbars */
+/* Custom scrollbar for dark financial UI */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(11, 21, 35, 0.6);
 }
-html.dark ::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.35);
-  border-radius: 4px;
+::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.2);
+  border-radius: 3px;
 }
-html.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.55);
-}
-
-html.light ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.45);
-  border-radius: 4px;
-}
-html.light ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.65);
-}
-
-/* Transitions for interactive elements */
-button, input, select, a {
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.4);
 }

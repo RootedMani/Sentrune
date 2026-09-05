@@ -1,0 +1,295 @@
+import { Asset, NewsItem } from '../types';
+
+export const INITIAL_ASSETS: Asset[] = [
+  {
+    symbol: 'AAPL',
+    name: 'Apple Inc.',
+    type: 'stock',
+    price: 319.97,
+    change: -8.24,
+    changePercent: -2.51,
+    exchange: 'NASDAQ',
+    volume: '54.8M',
+    high24h: 329.10,
+    low24h: 318.50,
+    marketCap: '$4.82T',
+    peRatio: '32.4',
+    rsi: 46.2,
+    macd: '-1.14 (Bearish Divergence)',
+    volatility: '18.4%',
+    currency: 'USD'
+  },
+  {
+    symbol: 'MSFT',
+    name: 'Microsoft Corporation',
+    type: 'stock',
+    price: 499.70,
+    change: -10.42,
+    changePercent: -2.04,
+    exchange: 'NASDAQ',
+    volume: '23.1M',
+    high24h: 512.30,
+    low24h: 497.80,
+    marketCap: '$3.71T',
+    peRatio: '35.8',
+    rsi: 51.0,
+    macd: '+0.45 (Neutral)',
+    volatility: '16.2%',
+    currency: 'USD'
+  },
+  {
+    symbol: 'BTC',
+    name: 'Bitcoin',
+    type: 'crypto',
+    price: 79766.51,
+    change: 87.74,
+    changePercent: 0.11,
+    exchange: 'Global Crypto',
+    volume: '$38.4B',
+    high24h: 81200.00,
+    low24h: 78450.00,
+    marketCap: '$1.58T',
+    rsi: 58.4,
+    macd: '+312.8 (Bullish Trend)',
+    volatility: '42.1%',
+    currency: 'USD'
+  },
+  {
+    symbol: 'ETH',
+    name: 'Ethereum',
+    type: 'crypto',
+    price: 2460.01,
+    change: 3.44,
+    changePercent: 0.14,
+    exchange: 'Global Crypto',
+    volume: '$19.2B',
+    high24h: 2515.00,
+    low24h: 2420.00,
+    marketCap: '$296.2B',
+    rsi: 48.9,
+    macd: '-12.4 (Consolidating)',
+    volatility: '48.6%',
+    currency: 'USD'
+  },
+  {
+    symbol: 'NVDA',
+    name: 'NVIDIA Corporation',
+    type: 'stock',
+    price: 138.25,
+    change: 3.85,
+    changePercent: 2.86,
+    exchange: 'NASDAQ',
+    volume: '71.2M',
+    high24h: 139.80,
+    low24h: 134.10,
+    marketCap: '$3.39T',
+    peRatio: '48.2',
+    rsi: 64.7,
+    macd: '+2.18 (Strong Momentum)',
+    volatility: '38.5%',
+    currency: 'USD'
+  },
+  {
+    symbol: 'SOL',
+    name: 'Solana',
+    type: 'crypto',
+    price: 184.60,
+    change: -4.20,
+    changePercent: -2.22,
+    exchange: 'Global Crypto',
+    volume: '$5.4B',
+    high24h: 192.50,
+    low24h: 181.10,
+    marketCap: '$86.4B',
+    rsi: 52.1,
+    macd: '+4.12 (Neutral)',
+    volatility: '54.0%',
+    currency: 'USD'
+  }
+];
+
+export const INITIAL_NEWS: NewsItem[] = [
+  {
+    id: 'news-1',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 12,
+    source: '24/7 WALL ST.',
+    headline: 'Bitcoin Just Exploded 40% From Its July Low — Is $100,000 Back on the Table?',
+    marketTakeaway: 'Macro liquidity expands as spot ETF volume re-accelerates past $1.4B daily average.',
+    isHighImpact: true, // Selected few has 🔥
+    finbertScore: 0.72,
+    sentiment: 'bullish',
+    relatedAssets: ['BTC'],
+    category: 'crypto',
+    readTime: '2 min read'
+  },
+  {
+    id: 'news-2',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 25,
+    source: 'FORBES',
+    headline: 'Trump Issues Serious Fed Warning As Bitcoin Braces For A Huge Price Shock',
+    marketTakeaway: 'Key support at $78,000 tested as traders weigh geopolitical statements against bond yields.',
+    isHighImpact: true, // Selected few has 🔥
+    finbertScore: -0.42,
+    sentiment: 'bearish',
+    relatedAssets: ['BTC', 'ETH'],
+    category: 'macro',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-3',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 45,
+    source: 'COINGAPE',
+    headline: 'Bitcoin and Ethereum Price Prediction Ahead of US CPI and ECB Rate Decision',
+    marketTakeaway: 'Consolidation band tightens ahead of upcoming monetary policy prints this Thursday.',
+    isHighImpact: false, // NOT high impact, no fire emoji
+    finbertScore: 0.05,
+    sentiment: 'neutral',
+    relatedAssets: ['BTC', 'ETH'],
+    category: 'macro',
+    readTime: '4 min read'
+  },
+  {
+    id: 'news-4',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 75,
+    source: 'COINDESK',
+    headline: 'Bitcoin tests key resistance levels amid institutional ETF inflows and macro liquidity',
+    marketTakeaway: 'Institutional accumulation absorbs short-side orderbook resistance near $81,000.',
+    isHighImpact: false, // NO fire emoji
+    finbertScore: 0.68,
+    sentiment: 'bullish',
+    relatedAssets: ['BTC'],
+    category: 'crypto',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-5',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 110,
+    source: 'COINDESK',
+    headline: 'British investor thought he lost $2,000 in bitcoin in 2012. He just recovered $4.5 million',
+    marketTakeaway: 'Long-term dormant wallet reactivation highlights ongoing self-custody recovery cases.',
+    isHighImpact: false,
+    finbertScore: 0.12,
+    sentiment: 'neutral',
+    relatedAssets: ['BTC'],
+    category: 'crypto',
+    readTime: '2 min read'
+  },
+  {
+    id: 'news-6',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 140,
+    source: 'COINPEDIA',
+    headline: 'Why Is Ethereum Still Below $3000? While Bitcoin Price Hits $82,000 — Here’s What You Need to Know',
+    marketTakeaway: 'L2 fee capture model continues to compress L1 base-layer burn velocity.',
+    isHighImpact: false,
+    finbertScore: -0.28,
+    sentiment: 'bearish',
+    relatedAssets: ['ETH', 'BTC'],
+    category: 'crypto',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-7',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 180,
+    source: 'COINTELEGRAPH',
+    headline: 'Here’s what happened in crypto today',
+    marketTakeaway: 'Daily roundup of derivatives open interest, stablecoin peg stability, and cross-chain volume.',
+    isHighImpact: false,
+    finbertScore: 0.00,
+    sentiment: 'neutral',
+    relatedAssets: ['BTC', 'ETH', 'SOL'],
+    category: 'crypto',
+    readTime: '5 min read'
+  },
+  {
+    id: 'news-8',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 220,
+    source: 'COINTELEGRAPH',
+    headline: 'Poland upholds crypto bill veto as Zondacrypto scandal widens',
+    marketTakeaway: 'Regulatory compliance pressures mount for Central European virtual asset providers.',
+    isHighImpact: false,
+    finbertScore: -1.00,
+    sentiment: 'bearish',
+    relatedAssets: ['BTC', 'ETH'],
+    category: 'regulatory',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-9',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 260,
+    source: 'BLOOMBERG',
+    headline: 'Apple Supply Chain Adjusts Forecast on Next-Gen Silicon Fab Allocations',
+    marketTakeaway: '3nm foundry allocation secured with estimated 12% energy efficiency improvements.',
+    isHighImpact: true, // Selected few has 🔥
+    finbertScore: 0.54,
+    sentiment: 'bullish',
+    relatedAssets: ['AAPL'],
+    category: 'equities',
+    readTime: '4 min read'
+  },
+  {
+    id: 'news-10',
+    time: 'Sep 5, 2026',
+    timestamp: Date.now() - 1000 * 60 * 300,
+    source: 'REUTERS',
+    headline: 'Microsoft Expands Enterprise AI Infrastructure with New Sovereign Cloud Datacenters',
+    marketTakeaway: 'Azure capital expenditure guided higher as European public sector demand accelerates.',
+    isHighImpact: false,
+    finbertScore: 0.61,
+    sentiment: 'bullish',
+    relatedAssets: ['MSFT'],
+    category: 'equities',
+    readTime: '3 min read'
+  }
+];
+
+export const INITIAL_DISCUSSIONS = [
+  {
+    id: 'disc-1',
+    author: 'QuantDesk_Alpha',
+    platform: 'X / Twitter',
+    time: '18m ago',
+    content: 'Orderbook delta on $AAPL showing heavy absorption at the 318-319 block. Options gamma flips positive above 322.',
+    sentiment: 'bullish',
+    upvotes: 142,
+    asset: 'AAPL'
+  },
+  {
+    id: 'disc-2',
+    author: 'MacroWhale',
+    platform: 'Reddit r/stocks',
+    time: '42m ago',
+    content: 'Fed swap pricing suggests high probability of rate cuts by Q4. Tech multiples could see expansion if 10yr yield stays under 4.15%.',
+    sentiment: 'bullish',
+    upvotes: 389,
+    asset: 'MSFT'
+  },
+  {
+    id: 'disc-3',
+    author: 'BitSatoshi_Node',
+    platform: 'Telegram Alpha Desk',
+    time: '1h ago',
+    content: 'BTC exchange reserves drop to 3-year low of 1.94M coins. Spot bids aggressively absorbing spot desk selling.',
+    sentiment: 'bullish',
+    upvotes: 215,
+    asset: 'BTC'
+  },
+  {
+    id: 'disc-4',
+    author: 'DeFi_Auditor',
+    platform: 'Reddit r/ethfinance',
+    time: '2h ago',
+    content: 'Layer 2 gas consumption hits all time high while L1 fees stay suppressed. Good for users, mixed for token burn velocity.',
+    sentiment: 'neutral',
+    upvotes: 94,
+    asset: 'ETH'
+  }
+];

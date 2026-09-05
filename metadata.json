@@ -1,6 +1,6 @@
 {
   "name": "Sentrune",
-  "description": "Quantitative market intelligence, strategy workstation, and Alpaca paper trading suite.",
+  "description": "Quantitative Market Intelligence & Strategy Workstation with instant-cached financial news, smart asset price alerts, and dual casual/power trader analytics.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
