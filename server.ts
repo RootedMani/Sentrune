@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { getDatabase, TechnicalFeature, ensureBarsAndTechnicals } from './server/db.js';
+import { cleanRssContent, formatCleanSummary } from './server/sanitizer.js';
 import { generatePredictionAndExplanation } from './server/narrative.js';
 import { runIngestionAndFeatures } from './server/refresh.js';
 import { translateNewsItems, translateSocialItems } from './server/translator.js';
@@ -37,7 +38,12 @@ import {
   setRuntimeCredentials,
   clearRuntimeCredentials,
   resetSimulatedAccount,
+  fetchAlpacaNews,
 } from './server/alpaca.js';
+import {
+  batchEnrichNewsWithAi,
+  generateAiSummaryAndHook,
+} from './server/ai_summarizer.js';
 
 async function startServer() {
   const app = express();
@@ -207,12 +213,35 @@ async function startServer() {
   app.get('/api/news', async (req: Request, res: Response) => {
     const assetId = req.query.asset_id ? parseInt(req.query.asset_id as string, 10) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 25;
+    const targetAsset = db.assets.find((a) => a.id === assetId) || db.assets[0];
 
     const linkedNewsIds = new Set(
       db.news_item_assets.filter((na) => na.asset_id === assetId).map((na) => na.news_item_id)
     );
 
-    let news = db.news_items.filter((n) => linkedNewsIds.has(n.id) || linkedNewsIds.size === 0);
+    let news = db.news_items.filter((n) => {
+      const text = (n.headline + ' ' + (n.body || '')).toLowerCase();
+      const mentionsStock = targetAsset
+        ? text.includes(targetAsset.symbol.toLowerCase()) ||
+          text.includes(targetAsset.name.toLowerCase().replace(/inc\.|corp\./gi, '').trim())
+        : true;
+
+      if (linkedNewsIds.has(n.id)) {
+        if (targetAsset && targetAsset.asset_type === 'stock') {
+          const isPureCrypto =
+            (text.includes('crypto') || text.includes('bitcoin') || text.includes('injective') || text.includes('mortgage records')) &&
+            !mentionsStock;
+          if (isPureCrypto) return false;
+        }
+        return true;
+      }
+
+      if (targetAsset) {
+        return mentionsStock;
+      }
+      return false;
+    });
+
     news.sort((a, b) => new Date(b.published_at).getTime() - new Date(a.published_at).getTime());
 
     const sliced = news.slice(0, limit);
@@ -230,19 +259,128 @@ async function startServer() {
       console.warn('Error applying translations to news items:', err);
     }
 
-    res.json(sliced);
+    try {
+      await batchEnrichNewsWithAi(sliced, targetAsset?.symbol);
+      sliced.forEach((aiItem) => {
+        const item = db.news_items.find((n) => n.id === aiItem.id);
+        if (item) {
+          if (!item.summary_ai && aiItem.summary_ai) item.summary_ai = aiItem.summary_ai;
+          if (!item.hook_ai && aiItem.hook_ai) item.hook_ai = aiItem.hook_ai;
+          if (!item.summary_ai_fa && aiItem.summary_ai_fa) item.summary_ai_fa = aiItem.summary_ai_fa;
+          if (!item.hook_ai_fa && aiItem.hook_ai_fa) item.hook_ai_fa = aiItem.hook_ai_fa;
+          if (!item.key_takeaways && aiItem.key_takeaways) item.key_takeaways = aiItem.key_takeaways;
+          if (!item.key_takeaways_fa && aiItem.key_takeaways_fa) item.key_takeaways_fa = aiItem.key_takeaways_fa;
+        }
+      });
+    } catch (aiErr) {
+      console.warn('Error enriching news with AI summary & hook:', aiErr);
+    }
+
+    const cleanNews = sliced.map((n) => ({
+      ...n,
+      headline: cleanRssContent(n.headline),
+      body: formatCleanSummary(n.headline, n.body, n.source_name),
+      headline_fa: n.headline_fa ? cleanRssContent(n.headline_fa) : undefined,
+      body_fa: n.body_fa ? cleanRssContent(n.body_fa) : undefined,
+      summary_ai: n.summary_ai,
+      hook_ai: n.hook_ai,
+      summary_ai_fa: n.summary_ai_fa,
+      hook_ai_fa: n.hook_ai_fa,
+      key_takeaways: n.key_takeaways,
+      key_takeaways_fa: n.key_takeaways_fa,
+      alpaca_coverage: n.alpaca_coverage,
+      author: n.author,
+    }));
+
+    res.json(cleanNews);
+  });
+
+  // API: On-demand AI Summarization & Engagement Hook generation (Gemini gemini-3.8-flash)
+  app.post('/api/news/ai-summarize', async (req: Request, res: Response) => {
+    try {
+      const { id, headline, body, source_name, symbol, url } = req.body;
+      if (!headline) {
+        return res.status(400).json({ error: 'Headline is required' });
+      }
+
+      const result = await generateAiSummaryAndHook({
+        id: id ? parseInt(id, 10) : undefined,
+        headline,
+        body,
+        source_name,
+        symbol,
+        url,
+      });
+
+      if (id) {
+        const item = db.news_items.find((n) => n.id === parseInt(id, 10));
+        if (item) {
+          item.summary_ai = result.summary;
+          item.hook_ai = result.hook;
+          item.summary_ai_fa = result.summary_fa;
+          item.hook_ai_fa = result.hook_fa;
+          item.key_takeaways = result.key_takeaways;
+          item.key_takeaways_fa = result.key_takeaways_fa;
+        }
+      }
+
+      res.json(result);
+    } catch (err: any) {
+      console.error('Error generating AI summary & hook:', err);
+      res.status(500).json({ error: err.message || 'Failed to generate AI summary and hook' });
+    }
+  });
+
+  // API: Alpaca Institutional News Feed with long-form reporting & Benzinga content
+  app.get('/api/alpaca/news', async (req: Request, res: Response) => {
+    try {
+      const symbolsParam = req.query.symbols as string;
+      const symbols = symbolsParam
+        ? symbolsParam.split(',')
+        : ['AAPL', 'MSFT', 'BTCUSD', 'ETHUSD'];
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 15;
+
+      const alpacaData = await fetchAlpacaNews(symbols, limit);
+      res.json(alpacaData);
+    } catch (err: any) {
+      console.error('Error fetching Alpaca news:', err);
+      res.status(500).json({ error: err.message || 'Failed to fetch Alpaca news' });
+    }
   });
 
   // API 9: Market Discussion / Social
   app.get('/api/social', async (req: Request, res: Response) => {
     const assetId = req.query.asset_id ? parseInt(req.query.asset_id as string, 10) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 25;
+    const targetAsset = db.assets.find((a) => a.id === assetId) || db.assets[0];
 
     const linkedSocialIds = new Set(
       db.social_item_assets.filter((sa) => sa.asset_id === assetId).map((sa) => sa.social_item_id)
     );
 
-    let social = db.social_items.filter((s) => linkedSocialIds.has(s.id) || linkedSocialIds.size === 0);
+    let social = db.social_items.filter((s) => {
+      const text = (s.title + ' ' + (s.body || '')).toLowerCase();
+      const mentionsAsset = targetAsset
+        ? text.includes(targetAsset.symbol.toLowerCase()) ||
+          text.includes(targetAsset.name.toLowerCase().replace(/inc\.|corp\./gi, '').trim())
+        : true;
+
+      if (linkedSocialIds.has(s.id)) {
+        if (targetAsset && targetAsset.asset_type === 'stock') {
+          const isPureCrypto =
+            (text.includes('crypto') || text.includes('bitcoin') || text.includes('eth') || text.includes('doge')) &&
+            !mentionsAsset;
+          if (isPureCrypto) return false;
+        }
+        return true;
+      }
+
+      if (targetAsset) {
+        return mentionsAsset;
+      }
+      return false;
+    });
+
     social.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     const sliced = social.slice(0, limit);
@@ -260,7 +398,15 @@ async function startServer() {
       console.warn('Error applying translations to social items:', err);
     }
 
-    res.json(sliced);
+    const cleanSocial = sliced.map((s) => ({
+      ...s,
+      title: cleanRssContent(s.title),
+      body: s.body ? cleanRssContent(s.body) : undefined,
+      title_fa: s.title_fa ? cleanRssContent(s.title_fa) : undefined,
+      body_fa: s.body_fa ? cleanRssContent(s.body_fa) : undefined,
+    }));
+
+    res.json(cleanSocial);
   });
 
   // API 10: Model prediction, explainability, validation & backtest

@@ -1,4 +1,6 @@
 import { getDatabase, NewsItem, SocialItem, SentimentAggregate } from './db.js';
+import { cleanRssContent, formatCleanSummary } from './sanitizer.js';
+import { fetchAlpacaNews } from './alpaca.js';
 
 // Comprehensive Financial NLP Lexicon with Polarity & Intensifiers
 const FINANCIAL_LEXICON: Record<string, number> = {
@@ -122,6 +124,12 @@ export interface ScoredArticle {
   sentiment_score: number; // -1 to +1
   sentiment_label: 'positive' | 'negative' | 'neutral';
   matched_asset_ids: number[];
+  author?: string;
+  summary_ai?: string;
+  hook_ai?: string;
+  summary_ai_fa?: string;
+  hook_ai_fa?: string;
+  alpaca_coverage?: boolean;
 }
 
 export interface ScoredSocial {
@@ -248,14 +256,9 @@ function parseRssXml(xml: string, defaultSourceName: string, defaultSourceType: 
     const sourceMatch = itemXml.match(/<source[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/source>/i);
 
     if (titleMatch) {
-      let headline = titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').trim();
-      // Remove HTML tags from headline
-      headline = headline.replace(/<[^>]*>?/gm, '').trim();
+      let headline = cleanRssContent(titleMatch[1]);
 
-      let body = descMatch ? descMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, '$1').replace(/<[^>]*>?/gm, '').trim() : '';
-      if (body.length > 280) body = body.slice(0, 277) + '...';
-
-      let sourceName = sourceMatch ? sourceMatch[1].trim() : defaultSourceName;
+      let sourceName = sourceMatch ? cleanRssContent(sourceMatch[1]) : defaultSourceName;
       // If Google News headline ends with "- Source Name", extract it
       const googleDash = headline.lastIndexOf(' - ');
       if (googleDash > 0 && googleDash > headline.length - 40) {
@@ -263,7 +266,30 @@ function parseRssXml(xml: string, defaultSourceName: string, defaultSourceType: 
         headline = headline.substring(0, googleDash).trim();
       }
 
-      const url = linkMatch ? linkMatch[1].trim() : 'https://news.google.com';
+      // Clean body and verify it isn't an RSS anchor link or duplicate of the headline
+      let body = descMatch ? cleanRssContent(descMatch[1]) : '';
+
+      // Check if body is just the headline and source repeated, or starts with raw URL
+      const normHead = headline.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const normBody = body.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      if (
+        !body ||
+        body.startsWith('http') ||
+        body.includes('news.google.com') ||
+        body.includes('&lt;') ||
+        body.includes('<a') ||
+        normBody.length < 20 ||
+        normBody.startsWith(normHead) ||
+        normHead.startsWith(normBody)
+      ) {
+        // If the RSS feed provided no real body or just a link/duplicate, clear it so a clean summary can be assigned
+        body = '';
+      } else if (body.length > 320) {
+        body = body.slice(0, 317) + '...';
+      }
+
+      const url = linkMatch ? cleanRssContent(linkMatch[1]) : 'https://news.google.com';
       let published_at = new Date().toISOString();
       if (pubDateMatch) {
         const parsed = new Date(pubDateMatch[1]);
@@ -296,10 +322,16 @@ export async function scrapeFreeNewsFeeds(assets: { id: number; symbol: string; 
   // 1. Google News RSS for each asset
   for (const asset of assets) {
     try {
-      const queries = [
-        `${asset.symbol} ${asset.name} market news price`,
-        `${asset.symbol} crypto stock trading forecast`,
-      ];
+      const isStock = asset.asset_type === 'stock';
+      const queries = isStock
+        ? [
+            `"${asset.name}" stock news`,
+            `${asset.symbol} shares earnings market analyst`,
+          ]
+        : [
+            `${asset.name} crypto price news`,
+            `${asset.symbol} cryptocurrency market`,
+          ];
 
       for (const q of queries) {
         const url = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
@@ -314,11 +346,23 @@ export async function scrapeFreeNewsFeeds(assets: { id: number; symbol: string; 
 
             const sentiment = analyzeSentiment(item.headline + ' ' + item.body);
             let matchedAssets = findMatchingAssets(item.headline + ' ' + item.body, assets);
-            if (matchedAssets.length === 0) matchedAssets = [asset.id];
+            
+            // Only assign if explicitly matching this asset or found matching assets
+            const fullText = (item.headline + ' ' + item.body).toLowerCase();
+            const assetSymLower = asset.symbol.toLowerCase();
+            const assetNameLower = asset.name.toLowerCase().replace(/inc\.|corp\.|corporation/gi, '').trim();
+            const directMatch = fullText.includes(assetSymLower) || (assetNameLower.length > 2 && fullText.includes(assetNameLower));
+
+            if (matchedAssets.length === 0 && directMatch) {
+              matchedAssets = [asset.id];
+            }
+
+            // Skip articles that have no relevant connection to any tracked assets
+            if (matchedAssets.length === 0) continue;
 
             articles.push({
               headline: item.headline,
-              body: item.body || `Recent reporting on ${asset.name} (${asset.symbol}) market movements and analyst updates.`,
+              body: formatCleanSummary(item.headline, item.body, item.source_name),
               url: item.url,
               source_name: item.source_name,
               source_type: 'web_scrape_google_rss',
@@ -359,7 +403,7 @@ export async function scrapeFreeNewsFeeds(assets: { id: number; symbol: string; 
         if (matched.length > 0) {
           articles.push({
             headline: item.headline,
-            body: item.body,
+            body: formatCleanSummary(item.headline, item.body, 'CoinDesk'),
             url: item.url,
             source_name: 'CoinDesk',
             source_type: 'coindesk_rss',
@@ -397,7 +441,7 @@ export async function scrapeFreeNewsFeeds(assets: { id: number; symbol: string; 
         if (matched.length > 0) {
           articles.push({
             headline: item.headline,
-            body: item.body,
+            body: formatCleanSummary(item.headline, item.body, 'CoinTelegraph'),
             url: item.url,
             source_name: 'CoinTelegraph',
             source_type: 'cointelegraph_rss',
@@ -431,7 +475,7 @@ export async function scrapeFreeNewsFeeds(assets: { id: number; symbol: string; 
         if (matched.length > 0) {
           articles.push({
             headline: item.headline,
-            body: item.body,
+            body: formatCleanSummary(item.headline, item.body, 'Yahoo Finance'),
             url: item.url,
             source_name: 'Yahoo Finance',
             source_type: 'yahoo_finance_rss',
@@ -445,6 +489,45 @@ export async function scrapeFreeNewsFeeds(assets: { id: number; symbol: string; 
     }
   } catch (err) {
     console.warn('Error scraping Yahoo Finance RSS:', err);
+  }
+
+  // 5. Alpaca Institutional News Feed (Long-form reporting & detailed Benzinga content)
+  try {
+    const alpacaSymbols = assets.map((a) => (a.asset_type === 'crypto' ? `${a.symbol}USD` : a.symbol));
+    const alpacaResult = await fetchAlpacaNews(alpacaSymbols, 10);
+    for (const item of alpacaResult.articles) {
+      if (fetchedHeadlines.has(item.headline.toLowerCase())) continue;
+      fetchedHeadlines.add(item.headline.toLowerCase());
+
+      const fullContent = `${item.headline} ${item.content || item.summary || ''}`;
+      const sentiment = analyzeSentiment(fullContent);
+
+      let matched = findMatchingAssets(fullContent, assets);
+      if (matched.length === 0 && item.symbols) {
+        for (const sym of item.symbols) {
+          const found = assets.find((a) => sym.toUpperCase().includes(a.symbol.toUpperCase()));
+          if (found && !matched.includes(found.id)) matched.push(found.id);
+        }
+      }
+
+      if (matched.length > 0) {
+        articles.push({
+          headline: item.headline,
+          body: item.summary || (item.content ? item.content.slice(0, 320) : ''),
+          url: item.url,
+          source_name: item.source || 'Alpaca Institutional News',
+          source_type: 'alpaca_news',
+          published_at: item.created_at,
+          sentiment_score: sentiment.score,
+          sentiment_label: sentiment.label,
+          matched_asset_ids: matched,
+          author: item.author,
+          alpaca_coverage: true,
+        });
+      }
+    }
+  } catch (alpacaErr) {
+    console.warn('Error incorporating Alpaca news in scraper:', alpacaErr);
   }
 
   return articles;

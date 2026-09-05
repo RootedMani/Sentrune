@@ -2,6 +2,7 @@ import { getDatabase, PriceBar, IngestionLog, ensureBarsAndTechnicals } from './
 import { calculateIndicators } from './indicators.js';
 import { scrapeFreeNewsFeeds, scrapeSocialDiscussions, recalculateSentimentAggregates } from './scraper.js';
 import { translateNewsItems } from './translator.js';
+import { batchEnrichNewsWithAi } from './ai_summarizer.js';
 
 export async function runIngestionAndFeatures(): Promise<Record<string, number>> {
   const db = getDatabase();
@@ -296,12 +297,14 @@ export async function runIngestionAndFeatures(): Promise<Record<string, number>>
           id: newId,
           source_type: article.source_type,
           source_name: article.source_name,
+          author: article.author,
           headline: article.headline,
           body: article.body,
           url: article.url,
           published_at: article.published_at,
           raw_sentiment: article.sentiment_score,
           sentiment: article.sentiment_label,
+          alpaca_coverage: article.alpaca_coverage,
         };
         newArticlesToInsert.push(item);
 
@@ -326,6 +329,12 @@ export async function runIngestionAndFeatures(): Promise<Record<string, number>>
         });
       } catch (trErr) {
         console.warn('Translation of scraped items failed:', trErr);
+      }
+
+      try {
+        await batchEnrichNewsWithAi(newArticlesToInsert);
+      } catch (aiErr) {
+        console.warn('AI hook and summary enrichment failed:', aiErr);
       }
 
       for (const item of newArticlesToInsert) {

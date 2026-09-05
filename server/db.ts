@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { calculateIndicators } from './indicators.js';
+import { sanitizeDatabase } from './sanitizer.js';
 
 export interface Asset {
   id: number;
@@ -78,11 +79,19 @@ export interface NewsItem {
   id: number;
   source_type: string;
   source_name: string;
+  author?: string;
   external_id?: string;
   headline: string;
   body?: string;
   headline_fa?: string;
   body_fa?: string;
+  summary_ai?: string;
+  hook_ai?: string;
+  summary_ai_fa?: string;
+  hook_ai_fa?: string;
+  key_takeaways?: string[];
+  key_takeaways_fa?: string[];
+  alpaca_coverage?: boolean;
   url?: string;
   published_at: string;
   raw_sentiment?: number;
@@ -307,6 +316,7 @@ export function ensureBarsAndTechnicals(db: DatabaseState, assetId: number, inte
 
 export function getDatabase(): DatabaseState {
   if (dbInstance) {
+    sanitizeDatabase(dbInstance);
     return dbInstance;
   }
 
@@ -686,5 +696,6 @@ export function getDatabase(): DatabaseState {
     last_refresh_at: Date.now(),
   };
 
+  sanitizeDatabase(dbInstance);
   return dbInstance;
 }
