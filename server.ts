@@ -21,6 +21,23 @@ import {
   triggerInitialSync,
   fetchFastLiveQuotes,
 } from './server/realtime.js';
+import {
+  isAlpacaConfigured,
+  getAlpacaConfig,
+  getAlpacaAccount,
+  getAlpacaPositions,
+  closeAlpacaPosition,
+  getAlpacaOrders,
+  placeAlpacaOrder,
+  cancelAlpacaOrder,
+  getAlpacaStockBars,
+  getAlpacaLatestQuote,
+  checkAlpacaDataCoverage,
+  testAlpacaConnection,
+  setRuntimeCredentials,
+  clearRuntimeCredentials,
+  resetSimulatedAccount,
+} from './server/alpaca.js';
 
 async function startServer() {
   const app = express();
@@ -533,6 +550,168 @@ async function startServer() {
     } catch (err: any) {
       console.error('Refresh error:', err);
       res.status(500).json({ error: err.message || 'Refresh failed' });
+    }
+  });
+
+  // API 16: Alpaca Brokerage & Paper Trading Endpoints
+  app.get('/api/alpaca/status', async (req: Request, res: Response) => {
+    try {
+      const config = getAlpacaConfig();
+      const account = await getAlpacaAccount();
+      res.json({
+        configured: config.isConfigured,
+        isPaper: config.isPaper,
+        isSimulated: !config.isConfigured,
+        baseUrl: config.baseUrl,
+        keyPreview: config.keyPreview,
+        account,
+      });
+    } catch (err: any) {
+      console.error('Alpaca status error:', err);
+      res.status(500).json({ error: err.message || 'Failed to check Alpaca status' });
+    }
+  });
+
+  app.get('/api/alpaca/account', async (req: Request, res: Response) => {
+    try {
+      const account = await getAlpacaAccount();
+      res.json({ success: true, account });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to fetch Alpaca account' });
+    }
+  });
+
+  app.get('/api/alpaca/positions', async (req: Request, res: Response) => {
+    try {
+      const positions = await getAlpacaPositions();
+      res.json({ success: true, positions });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to fetch Alpaca positions' });
+    }
+  });
+
+  app.delete('/api/alpaca/positions/:symbol', async (req: Request, res: Response) => {
+    try {
+      const result = await closeAlpacaPosition(req.params.symbol);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to close position' });
+    }
+  });
+
+  app.get('/api/alpaca/orders', async (req: Request, res: Response) => {
+    try {
+      const status = (req.query.status as any) || 'all';
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+      const orders = await getAlpacaOrders(status, limit);
+      res.json({ success: true, orders });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to fetch Alpaca orders' });
+    }
+  });
+
+  app.post('/api/alpaca/order', async (req: Request, res: Response) => {
+    try {
+      const { symbol, qty, side, type, time_in_force, limit_price, stop_price } = req.body;
+      if (!symbol || !qty || !side) {
+        return res.status(400).json({ error: 'symbol, qty, and side are required' });
+      }
+
+      const result = await placeAlpacaOrder({
+        symbol,
+        qty: parseFloat(qty),
+        side,
+        type: type || 'market',
+        time_in_force: time_in_force || 'day',
+        limit_price: limit_price ? parseFloat(limit_price) : undefined,
+        stop_price: stop_price ? parseFloat(stop_price) : undefined,
+      });
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
+
+      res.json({ success: true, order: result.order });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Alpaca order execution failed' });
+    }
+  });
+
+  app.delete('/api/alpaca/orders/:id', async (req: Request, res: Response) => {
+    try {
+      const result = await cancelAlpacaOrder(req.params.id);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to cancel order' });
+    }
+  });
+
+  app.get('/api/alpaca/coverage', async (req: Request, res: Response) => {
+    try {
+      const coverage = await checkAlpacaDataCoverage();
+      res.json({ success: true, coverage });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to fetch data coverage' });
+    }
+  });
+
+  app.get('/api/alpaca/bars', async (req: Request, res: Response) => {
+    try {
+      const symbol = (req.query.symbol as string) || 'AAPL';
+      const timeframe = (req.query.timeframe as any) || '1Day';
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+      const data = await getAlpacaStockBars(symbol, timeframe, limit);
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to fetch bars' });
+    }
+  });
+
+  app.get('/api/alpaca/quote', async (req: Request, res: Response) => {
+    try {
+      const symbol = (req.query.symbol as string) || 'AAPL';
+      const quote = await getAlpacaLatestQuote(symbol);
+      res.json({ success: true, quote });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to fetch quote' });
+    }
+  });
+
+  app.post('/api/alpaca/test-connection', async (req: Request, res: Response) => {
+    try {
+      const { apiKey, apiSecret, isPaper } = req.body;
+      const result = await testAlpacaConnection(apiKey, apiSecret, isPaper !== false);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ connected: false, error: err.message || 'Connection test failed' });
+    }
+  });
+
+  app.post('/api/alpaca/credentials', async (req: Request, res: Response) => {
+    try {
+      const { apiKey, apiSecret, isPaper } = req.body;
+      setRuntimeCredentials(apiKey, apiSecret, isPaper !== false);
+      res.json({ success: true, message: 'Alpaca credentials applied successfully' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to update credentials' });
+    }
+  });
+
+  app.delete('/api/alpaca/credentials', (req: Request, res: Response) => {
+    try {
+      clearRuntimeCredentials();
+      res.json({ success: true, message: 'Reverted to simulated sandbox' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to clear credentials' });
+    }
+  });
+
+  app.post('/api/alpaca/reset', (req: Request, res: Response) => {
+    try {
+      resetSimulatedAccount();
+      res.json({ success: true, message: 'Paper sandbox account reset to $100,000' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to reset account' });
     }
   });
 

@@ -43,6 +43,7 @@ const faTranslations: Translations = {
   tab_news: 'اخبار و گزارش‌ها',
   tab_social: 'دیدگاه‌های معامله‌گران',
   tab_model: 'سیگنال‌ها و استراتژی هوش مصنوعی',
+  tab_alpaca: 'معاملات آلپاکا (Alpaca)',
 
   // Subtabs in ModelTab
   subtab_architecture: 'استودیو طراحی و بهینه‌سازی الگوریتم‌ها',
@@ -356,6 +357,7 @@ const enTranslations: Translations = {
   tab_news: 'Financial News',
   tab_social: 'Community & Social Pulse',
   tab_model: 'AI Strategy & Insights',
+  tab_alpaca: 'Alpaca Brokerage & Sandbox',
 
   // Subtabs in ModelTab
   subtab_architecture: 'Quantitative Strategy Studio',

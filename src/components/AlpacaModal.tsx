@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ShieldCheck,
   Zap,
@@ -40,6 +41,7 @@ interface AlpacaModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultSymbol?: string;
+  inline?: boolean;
 }
 
 type TabType = 'data' | 'paper' | 'setup';
@@ -48,6 +50,7 @@ export const AlpacaModal: React.FC<AlpacaModalProps> = ({
   isOpen,
   onClose,
   defaultSymbol = 'AAPL',
+  inline = false,
 }) => {
   const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState<TabType>('data');
@@ -93,7 +96,7 @@ export const AlpacaModal: React.FC<AlpacaModalProps> = ({
 
   // Keyboard shortcut (Escape to close) and document scroll lock
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || inline) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -109,7 +112,7 @@ export const AlpacaModal: React.FC<AlpacaModalProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = originalOverflow;
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, inline]);
 
   // Load initial data when modal opens
   useEffect(() => {
@@ -386,26 +389,18 @@ export const AlpacaModal: React.FC<AlpacaModalProps> = ({
     (inspectBars.length > 0 ? inspectBars[inspectBars.length - 1].c : 100);
   const estimatedOrderCost = (orderQty * currentInspectPrice).toFixed(2);
 
-  return (
+  const containerContent = (
     <div
-      id="alpaca-modal-backdrop"
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="alpaca-modal-title"
+      id="alpaca-modal-container"
+      className={
+        inline
+          ? 'relative w-full max-w-6xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col'
+          : 'relative w-full max-w-5xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] my-auto'
+      }
+      dir={language === 'fa' ? 'rtl' : 'ltr'}
     >
-      <div
-        id="alpaca-modal-container"
-        className="relative w-full max-w-4xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] my-auto"
-        dir={language === 'fa' ? 'rtl' : 'ltr'}
-      >
-        {/* Header with High-Contrast Dismiss Button */}
-        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/80 shrink-0">
+      {/* Header with High-Contrast Dismiss Button */}
+      <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-900/80 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-xl shadow-xs">
               🦙
@@ -449,12 +444,12 @@ export const AlpacaModal: React.FC<AlpacaModalProps> = ({
             <button
               onClick={onClose}
               id="btn-close-alpaca-modal"
-              aria-label={language === 'fa' ? 'بستن پنجره' : 'Close modal'}
-              title={language === 'fa' ? 'بستن (Esc)' : 'Close (Esc)'}
+              aria-label={language === 'fa' ? (inline ? 'بازگشت به نمای کلی' : 'بستن پنجره') : (inline ? 'Back to Overview' : 'Close modal')}
+              title={language === 'fa' ? (inline ? 'بازگشت به نمای کلی' : 'بستن (Esc)') : (inline ? 'Back to Overview' : 'Close (Esc)')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-200 hover:bg-rose-500 hover:text-white dark:bg-slate-800 dark:hover:bg-rose-600 text-slate-700 dark:text-slate-200 transition-all font-semibold text-xs cursor-pointer shadow-xs"
             >
               <X className="w-4 h-4" />
-              <span>{language === 'fa' ? 'بستن' : 'Close'}</span>
+              <span>{language === 'fa' ? (inline ? 'بازگشت' : 'بستن') : (inline ? 'Back' : 'Close')}</span>
             </button>
           </div>
         </div>
@@ -1377,11 +1372,34 @@ export const AlpacaModal: React.FC<AlpacaModalProps> = ({
             id="btn-footer-close-alpaca"
             className="px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold transition-all cursor-pointer shadow-xs"
           >
-            {language === 'fa' ? 'بستن' : 'Done / Close'}
+            {language === 'fa' ? (inline ? 'بازگشت به نمای کلی' : 'بستن') : (inline ? 'Back to Overview' : 'Done / Close')}
           </button>
         </div>
       </div>
-    </div>
+    );
+
+  if (inline) {
+    return containerContent;
+  }
+
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <div
+      id="alpaca-modal-backdrop"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="alpaca-modal-title"
+    >
+      {containerContent}
+    </div>,
+    document.body
   );
 };
 export default AlpacaModal;

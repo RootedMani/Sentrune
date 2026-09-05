@@ -18,6 +18,7 @@ import { SentimentTab } from './components/tabs/SentimentTab';
 import { NewsTab } from './components/tabs/NewsTab';
 import { SocialTab } from './components/tabs/SocialTab';
 import { ModelTab } from './components/tabs/ModelTab';
+import { AlpacaModal } from './components/AlpacaModal';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AlertCircle, Loader2 } from 'lucide-react';
@@ -27,7 +28,7 @@ import { LivePriceUpdate } from './types';
 function getInitialState() {
   const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const tabFromUrl = params?.get('tab');
-  const validTabs = ['overview', 'prices', 'technicals', 'sentiment', 'news', 'social', 'model'];
+  const validTabs = ['overview', 'prices', 'technicals', 'sentiment', 'news', 'social', 'model', 'alpaca'];
   const initialTab =
     tabFromUrl && validTabs.includes(tabFromUrl)
       ? tabFromUrl
@@ -516,6 +517,15 @@ function DashboardContent() {
                   symbol={selectedAsset.symbol}
                   interval={selectedInterval}
                   asset={selectedAsset}
+                />
+              )}
+
+              {activeTab === 'alpaca' && (
+                <AlpacaModal
+                  isOpen={true}
+                  onClose={() => setActiveTab('overview')}
+                  defaultSymbol={selectedAsset?.symbol || 'AAPL'}
+                  inline={true}
                 />
               )}
             </>

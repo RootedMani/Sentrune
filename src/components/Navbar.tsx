@@ -111,6 +111,12 @@ export const Navbar: React.FC<NavbarProps> = ({
       defaultLabel: 'AI Strategy & Insights',
       icon: <Cpu className="w-3.5 h-3.5" />,
     },
+    {
+      id: 'alpaca',
+      key: 'tab_alpaca',
+      defaultLabel: 'Alpaca Brokerage',
+      icon: <span className="text-xs">🦙</span>,
+    },
   ];
 
   const isPositive = priceChange >= 0;

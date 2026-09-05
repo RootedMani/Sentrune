@@ -1,6 +1,6 @@
 {
   "name": "Sentrune",
-  "description": "Explainable market intelligence and alerting with Alpaca API paper trading and market data coverage.",
+  "description": "Quantitative market intelligence, strategy workstation, and Alpaca paper trading suite.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
