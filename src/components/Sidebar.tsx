@@ -37,46 +37,46 @@ export const Sidebar: React.FC = () => {
   return (
     <aside 
       id="sentrune-sidebar"
-      className="w-72 md:w-80 flex-shrink-0 bg-[#07111e] border-r border-slate-800/80 flex flex-col h-full overflow-y-auto"
+      className="w-72 md:w-80 flex-shrink-0 bg-white dark:bg-[#07111e] border-r border-slate-200 dark:border-slate-800/80 flex flex-col h-full overflow-y-auto transition-colors"
     >
       {/* Brand Header */}
-      <div className="p-4 border-b border-slate-800/60">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-800/60">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-950/40 text-white">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-950/20 text-white">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold tracking-tight text-white">{t.appTitle}</h1>
-                <span className="text-[10px] font-semibold bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 px-1.5 py-0.5 rounded">
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{t.appTitle}</h1>
+                <span className="text-[10px] font-semibold bg-cyan-100 dark:bg-cyan-950/80 text-cyan-700 dark:text-cyan-400 border border-cyan-300 dark:border-cyan-800/60 px-1.5 py-0.5 rounded">
                   {t.v1}
                 </span>
               </div>
-              <p className="text-[11px] leading-tight text-slate-400 mt-0.5 max-w-[190px]">
+              <p className="text-[11px] leading-tight text-slate-500 dark:text-slate-400 mt-0.5 max-w-[190px]">
                 {t.subtitle}
               </p>
             </div>
           </div>
         </div>
 
-        {/* Refresh Market Feeds button matching screenshot */}
+        {/* Refresh Market Feeds button */}
         <div className="mt-4">
           <button
             id="sidebar-refresh-feeds-btn"
             onClick={refreshFeeds}
             disabled={isRefreshing}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white font-semibold text-xs tracking-wide transition-all shadow-md shadow-cyan-950/50 cursor-pointer disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 active:bg-cyan-700 text-white font-semibold text-xs tracking-wide transition-all shadow-sm cursor-pointer disabled:opacity-60"
           >
             <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>{isRefreshing ? 'Revalidating Cache...' : t.refreshFeeds}</span>
           </button>
-          <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-2 px-1">
             <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              {t.lastUpdated} <strong className="text-slate-300 font-normal">{t.justNow}</strong>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              {t.lastUpdated} <strong className="text-slate-700 dark:text-slate-300 font-normal">{t.justNow}</strong>
             </span>
-            <span className="text-cyan-400/80 text-[10px] font-mono">
+            <span className="text-cyan-600 dark:text-cyan-400/80 text-[10px] font-mono">
               {cacheMeta.latencyMs}ms L1
             </span>
           </div>
@@ -84,17 +84,17 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Language Switcher & Quick Mode Selector */}
-      <div className="p-3 border-b border-slate-800/60 bg-[#060e1a]/60 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-          <Globe className="w-3.5 h-3.5 text-slate-400" />
+      <div className="p-3 border-b border-slate-200 dark:border-slate-800/60 bg-slate-50 dark:bg-[#060e1a]/60 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+          <Globe className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
           <span className="text-[11px]">{t.changeLang}</span>
         </div>
-        <div className="flex items-center bg-slate-900 border border-slate-800 rounded-md p-0.5">
+        <div className="flex items-center bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-md p-0.5">
           <button
             id="lang-btn-en"
             onClick={() => setLanguage('en')}
             className={`px-2.5 py-0.5 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-              language === 'en' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              language === 'en' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             EN
@@ -103,7 +103,7 @@ export const Sidebar: React.FC = () => {
             id="lang-btn-fa"
             onClick={() => setLanguage('fa')}
             className={`px-2.5 py-0.5 rounded text-[11px] font-semibold transition-colors cursor-pointer ${
-              language === 'fa' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              language === 'fa' ? 'bg-cyan-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             فارسی
@@ -112,12 +112,12 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* TARGET ASSET List */}
-      <div className="p-3 border-b border-slate-800/60 flex-1">
+      <div className="p-3 border-b border-slate-200 dark:border-slate-800/60 flex-1">
         <div className="flex items-center justify-between mb-2 px-1">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+          <span className="text-[11px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase">
             {t.targetAsset}
           </span>
-          <span className="text-[10px] text-slate-400 bg-slate-800/60 px-1.5 py-0.5 rounded">
+          <span className="text-[10px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/60 px-1.5 py-0.5 rounded">
             {INITIAL_ASSETS.length} Active
           </span>
         </div>
@@ -134,29 +134,29 @@ export const Sidebar: React.FC = () => {
                 onClick={() => setSelectedAsset(asset)}
                 className={`p-2.5 rounded-lg text-left transition-all border cursor-pointer ${
                   isSelected
-                    ? 'bg-cyan-950/40 border-cyan-500 shadow-sm shadow-cyan-950/30 ring-1 ring-cyan-500/30'
-                    : 'bg-[#0b1626]/80 border-slate-800/70 hover:bg-[#0f1d32] hover:border-slate-700'
+                    ? 'bg-cyan-50 dark:bg-cyan-950/40 border-cyan-500 shadow-sm ring-1 ring-cyan-500/30'
+                    : 'bg-slate-50 dark:bg-[#0b1626]/80 border-slate-200 dark:border-slate-800/70 hover:bg-slate-100 dark:hover:bg-[#0f1d32] hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-xs text-white">{asset.symbol}</span>
+                  <span className="font-bold text-xs text-slate-900 dark:text-white">{asset.symbol}</span>
                   <span className={`text-[10px] px-1 py-0.2 rounded uppercase font-medium ${
                     asset.type === 'crypto' 
-                      ? 'bg-amber-950/70 text-amber-400 border border-amber-800/40' 
-                      : 'bg-blue-950/70 text-blue-400 border border-blue-800/40'
+                      ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800/40' 
+                      : 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-800/40'
                   }`}>
                     {asset.type}
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
                   {asset.name}
                 </div>
                 <div className="flex items-baseline justify-between mt-1.5">
-                  <span className="text-xs font-semibold text-slate-200 font-mono">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 font-mono">
                     ${asset.price.toLocaleString()}
                   </span>
                   <span className={`text-[11px] font-mono font-medium ${
-                    isPositive ? 'text-emerald-400' : 'text-rose-400'
+                    isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                   }`}>
                     {isPositive ? '+' : ''}{asset.changePercent.toFixed(2)}%
                   </span>
@@ -166,12 +166,12 @@ export const Sidebar: React.FC = () => {
           })}
         </div>
 
-        {/* Timeframe Selector matching screenshot */}
-        <div className="mt-4 pt-3 border-t border-slate-800/60">
-          <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase block mb-2 px-1">
+        {/* Timeframe Selector */}
+        <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800/60">
+          <span className="text-[11px] font-bold tracking-wider text-slate-500 dark:text-slate-400 uppercase block mb-2 px-1">
             {t.timeframe}
           </span>
-          <div className="grid grid-cols-3 gap-1.5 bg-slate-900/90 p-1 rounded-lg border border-slate-800">
+          <div className="grid grid-cols-3 gap-1.5 bg-slate-100 dark:bg-slate-900/90 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
             {(['1d', '1h', '1wk'] as const).map(tf => (
               <button
                 key={tf}
@@ -180,7 +180,7 @@ export const Sidebar: React.FC = () => {
                 className={`py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
                   timeframe === tf
                     ? 'bg-cyan-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800/50'
                 }`}
               >
                 {tf}
@@ -189,20 +189,20 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* Demo Callout if User is in Demo Tier */}
+        {/* Demo Callout */}
         {isDemo && (
-          <div className="mt-4 p-2.5 rounded-lg bg-gradient-to-r from-cyan-950/40 to-blue-950/40 border border-cyan-800/50">
-            <div className="flex items-center gap-1.5 text-cyan-400 text-xs font-semibold">
+          <div className="mt-4 p-2.5 rounded-lg bg-gradient-to-r from-cyan-50 dark:from-cyan-950/40 to-blue-50 dark:to-blue-950/40 border border-cyan-200 dark:border-cyan-800/50">
+            <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400 text-xs font-semibold">
               <ShieldAlert className="w-3.5 h-3.5" />
               <span>Demo Workstation</span>
             </div>
-            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+            <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
               Explore freely. Register your free zero-cost account to unlock unlimited news feeds and custom price alerts.
             </p>
             <button
               id="sidebar-unlock-demo-btn"
               onClick={() => openAuthModal('signup')}
-              className="mt-2 w-full py-1 text-[11px] font-semibold text-cyan-300 bg-cyan-900/40 hover:bg-cyan-900/70 border border-cyan-700/60 rounded transition-colors cursor-pointer"
+              className="mt-2 w-full py-1 text-[11px] font-semibold text-cyan-700 dark:text-cyan-300 bg-cyan-100 dark:bg-cyan-900/40 hover:bg-cyan-200 dark:hover:bg-cyan-900/70 border border-cyan-300 dark:border-cyan-700/60 rounded transition-colors cursor-pointer"
             >
               Unlock Full Access (Free)
             </button>
@@ -210,47 +210,47 @@ export const Sidebar: React.FC = () => {
         )}
       </div>
 
-      {/* Stream & Cache Telemetry Footer matching screenshot */}
-      <div className="p-3.5 border-t border-slate-800/80 bg-[#050c17] text-[11px]">
+      {/* Stream & Cache Telemetry Footer */}
+      <div className="p-3.5 border-t border-slate-200 dark:border-slate-800/80 bg-slate-100 dark:bg-[#050c17] text-[11px] transition-colors">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-slate-300 font-semibold flex items-center gap-1.5">
-            <Wifi className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="text-slate-800 dark:text-slate-300 font-semibold flex items-center gap-1.5">
+            <Wifi className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
             {t.marketDataStream}
           </span>
-          <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-800/40">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-100 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-300 dark:border-emerald-800/40">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             {t.liveStream}
           </span>
         </div>
 
-        <div className="space-y-1 text-slate-400">
+        <div className="space-y-1 text-slate-600 dark:text-slate-400">
           <div className="flex justify-between">
             <span>{t.streamQuality}</span>
-            <span className="text-cyan-400 font-medium">{t.ultraLowLatency}</span>
+            <span className="text-cyan-600 dark:text-cyan-400 font-medium">{t.ultraLowLatency}</span>
           </div>
           <div className="flex justify-between">
             <span>{t.assetCoverage}</span>
-            <span className="text-slate-300">{t.cryptoUS}</span>
+            <span className="text-slate-800 dark:text-slate-300">{t.cryptoUS}</span>
           </div>
           <div className="flex justify-between">
             <span className="flex items-center gap-1">
-              <Database className="w-3 h-3 text-cyan-400" />
+              <Database className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
               {t.cacheStatus}
             </span>
-            <span className="text-emerald-400 font-mono">{t.instantHit}</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-mono">{t.instantHit}</span>
           </div>
         </div>
 
-        <div className="mt-3 pt-2.5 border-t border-slate-800/60 flex items-center justify-between">
+        <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800/60 flex items-center justify-between">
           <button
             id="sidebar-settings-btn"
             onClick={() => setOpenSettingsModal(true)}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-cyan-300 transition-colors cursor-pointer text-[11px]"
+            className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors cursor-pointer text-[11px]"
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span>Settings ({appMode === 'casual' ? 'Casual' : 'Power'})</span>
+            <span>Settings ({appMode === 'casual' ? 'Casual' : 'Pro'})</span>
           </button>
-          <span className="text-[10px] text-slate-400 font-mono">
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
             Zero-Cost Ready
           </span>
         </div>

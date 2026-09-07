@@ -40,31 +40,31 @@ export const Header: React.FC = () => {
   return (
     <header 
       id="sentrune-header"
-      className="h-16 bg-[#071221] border-b border-slate-800/80 px-4 flex items-center justify-between gap-3 text-slate-200"
+      className="h-16 bg-white dark:bg-[#071221] border-b border-slate-200 dark:border-slate-800/80 px-4 flex items-center justify-between gap-3 text-slate-800 dark:text-slate-200 transition-colors shadow-sm dark:shadow-none"
     >
-      {/* Left: Asset Ticker & Price Real-time Status Banner matching screenshot */}
+      {/* Left: Asset Ticker & Price Real-time Status Banner */}
       <div className="flex items-center gap-3 overflow-x-auto py-1">
         <div className="flex items-center gap-2">
-          <h2 className="text-base md:text-lg font-bold text-white tracking-tight whitespace-nowrap">
+          <h2 className="text-base md:text-lg font-bold text-slate-900 dark:text-white tracking-tight whitespace-nowrap">
             {selectedAsset.name}
           </h2>
-          <span className="text-xs font-mono font-bold bg-cyan-950 text-cyan-400 border border-cyan-800/60 px-2 py-0.5 rounded">
+          <span className="text-xs font-mono font-bold bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800/60 px-2 py-0.5 rounded">
             {selectedAsset.symbol}
           </span>
-          <span className="text-xs text-slate-400 font-mono hidden sm:inline">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono hidden sm:inline">
             {selectedAsset.exchange} • {timeframe}
           </span>
         </div>
 
         {/* Price & Change Badge */}
-        <div className="flex items-center gap-2 bg-[#0c1a2d] px-2.5 py-1 rounded-md border border-slate-800">
-          <span className="text-sm md:text-base font-bold font-mono text-white">
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-[#0c1a2d] px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-800">
+          <span className="text-sm md:text-base font-bold font-mono text-slate-900 dark:text-white">
             ${selectedAsset.price.toLocaleString()}
           </span>
           <span className={`text-xs font-mono font-semibold px-1.5 py-0.5 rounded ${
             isPositive
-              ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/50'
-              : 'bg-rose-950/80 text-rose-400 border border-rose-800/50'
+              ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800/50'
+              : 'bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-800/50'
           }`}>
             {isPositive ? '+' : ''}{selectedAsset.change.toFixed(2)} ({isPositive ? '+' : ''}{selectedAsset.changePercent.toFixed(2)}%)
           </span>
@@ -74,39 +74,39 @@ export const Header: React.FC = () => {
       {/* Right Controls: Stream status, Mode Switch, Alerts, Language, Theme, Account */}
       <div className="flex items-center gap-2 md:gap-2.5 flex-shrink-0">
         {/* Live Status indicator */}
-        <div className="hidden lg:flex items-center gap-1.5 bg-[#0a1829] border border-slate-800 text-xs px-2.5 py-1 rounded-md text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span className="text-emerald-400 font-semibold text-[11px]">LIVE</span>
-          <span className="text-[11px] text-slate-400">5s ago</span>
+        <div className="hidden lg:flex items-center gap-1.5 bg-slate-100 dark:bg-[#0a1829] border border-slate-200 dark:border-slate-800 text-xs px-2.5 py-1 rounded-md text-slate-700 dark:text-slate-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">LIVE</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">5s ago</span>
         </div>
 
-        {/* Refresh Feed Button matching screenshot */}
+        {/* Refresh Feed Button */}
         <button
           id="header-refresh-btn"
           onClick={refreshFeeds}
           disabled={isRefreshing}
-          className="flex items-center gap-1.5 bg-[#0c1a2d] hover:bg-[#11233d] border border-slate-800 text-slate-300 hover:text-white px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+          className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#11233d] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
           title="Instant refresh cache"
         >
-          <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-cyan-400' : ''}`} />
+          <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-cyan-500' : ''}`} />
           <span className="hidden sm:inline">{t.refresh}</span>
         </button>
 
-        {/* Mode Selector Pill: Casual (Afternoon cash) vs Power Analyst (Dedicated) */}
+        {/* Mode Selector Pill: Casual Trader vs Professional Quant */}
         <div 
-          className="flex items-center bg-[#091524] border border-slate-800 rounded-lg p-0.5"
-          title="Switch between Casual Trader and Power Analyst mode"
+          className="flex items-center bg-slate-100 dark:bg-[#091524] border border-slate-200 dark:border-slate-800 rounded-lg p-0.5 shadow-inner"
+          title="Switch between Casual Trader and Professional Quant mode"
         >
           <button
             id="mode-toggle-casual"
             onClick={() => setAppMode('casual')}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
               appMode === 'casual'
-                ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-amber-200/80 dark:bg-amber-500/20 text-amber-900 dark:text-amber-400 border border-amber-400/50 dark:border-amber-500/30 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <Zap className="w-3 h-3 text-amber-400" />
+            <Zap className="w-3 h-3 text-amber-500" />
             <span className="hidden sm:inline">Casual</span>
           </button>
           <button
@@ -114,12 +114,12 @@ export const Header: React.FC = () => {
             onClick={() => setAppMode('power')}
             className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
               appMode === 'power'
-                ? 'bg-cyan-600/30 text-cyan-300 border border-cyan-500/40'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-cyan-200/80 dark:bg-cyan-600/30 text-cyan-900 dark:text-cyan-300 border border-cyan-400/50 dark:border-cyan-500/40 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <BarChart2 className="w-3 h-3 text-cyan-400" />
-            <span className="hidden sm:inline">Power</span>
+            <BarChart2 className="w-3 h-3 text-cyan-500" />
+            <span className="hidden sm:inline">Professional</span>
           </button>
         </div>
 
@@ -127,10 +127,10 @@ export const Header: React.FC = () => {
         <button
           id="header-alerts-btn"
           onClick={() => setOpenAlertsModal(true)}
-          className="relative flex items-center gap-1.5 bg-[#0c1a2d] hover:bg-[#132642] border border-cyan-900/60 text-cyan-300 px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer"
+          className="relative flex items-center gap-1.5 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#132642] border border-cyan-200 dark:border-cyan-900/60 text-cyan-700 dark:text-cyan-300 px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer"
           title="Automated Newsletter & Price Alerts"
         >
-          <Bell className="w-3.5 h-3.5 text-cyan-400" />
+          <Bell className="w-3.5 h-3.5 text-cyan-500" />
           <span className="hidden md:inline">Alerts</span>
           {alerts.length > 0 && (
             <span className="w-4 h-4 rounded-full bg-cyan-600 text-white text-[10px] font-bold flex items-center justify-center">
@@ -143,7 +143,7 @@ export const Header: React.FC = () => {
         <button
           id="header-lang-toggle"
           onClick={() => setLanguage(language === 'en' ? 'fa' : 'en')}
-          className="hidden sm:flex items-center gap-1 bg-[#0c1a2d] hover:bg-[#12243d] border border-slate-800 text-slate-300 px-2 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer"
+          className="hidden sm:flex items-center gap-1 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#12243d] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer"
         >
           {language === 'en' ? 'فارسی' : 'English'}
         </button>
@@ -152,7 +152,7 @@ export const Header: React.FC = () => {
         <button
           id="header-theme-toggle"
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex items-center gap-1.5 bg-[#0c1a2d] hover:bg-[#12243d] border border-slate-800 text-slate-300 px-2.5 py-1 rounded-md text-xs transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#12243d] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-md text-xs transition-colors cursor-pointer"
           title="Toggle Light / Dark mode"
         >
           {theme === 'dark' ? (
@@ -162,7 +162,7 @@ export const Header: React.FC = () => {
             </>
           ) : (
             <>
-              <Moon className="w-3.5 h-3.5 text-cyan-400" />
+              <Moon className="w-3.5 h-3.5 text-cyan-600" />
               <span className="hidden lg:inline">{t.dark}</span>
             </>
           )}

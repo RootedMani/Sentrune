@@ -42,7 +42,7 @@ const WorkstationMain: React.FC = () => {
         <TabsNav />
 
         {/* Active Tab Viewport */}
-        <main className="flex-1 overflow-y-auto bg-gradient-to-b from-[#060e1a] to-[#040810]">
+        <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-gradient-to-b dark:from-[#060e1a] dark:to-[#040810] transition-colors">
           {activeTab === 'news' && <NewsTable />}
           {activeTab === 'price' && <PriceChart />}
           {activeTab === 'technical' && <TechnicalAnalysis />}
@@ -50,7 +50,7 @@ const WorkstationMain: React.FC = () => {
           {activeTab === 'social' && <SocialPulse />}
           {activeTab === 'overview' && <MarketOverview />}
           {activeTab === 'alerts' && <AlertsView />}
-          {activeTab === 'settings' && <NewsTable />}
+          {activeTab === 'settings' && <MarketOverview />}
         </main>
       </div>
 

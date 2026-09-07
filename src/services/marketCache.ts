@@ -162,6 +162,47 @@ export class MarketCacheService {
     } catch {}
   }
 
+  static addDiscussion(post: {
+    author: string;
+    platform: string;
+    content: string;
+    sentiment: 'bullish' | 'bearish' | 'neutral';
+    asset: string;
+    tags?: string[];
+  }) {
+    const all = this.getDiscussions();
+    const newPost = {
+      id: `disc-user-${Date.now()}`,
+      author: post.author || 'AlphaTrader',
+      platform: post.platform || 'Community Alpha',
+      time: 'Just now',
+      content: post.content,
+      sentiment: post.sentiment,
+      upvotes: 1,
+      commentCount: 0,
+      isFollowed: true,
+      asset: post.asset,
+      tags: post.tags || ['#Alpha', '#Breakout']
+    };
+    const updated = [newPost, ...all];
+    this.setDiscussions(updated);
+    return newPost;
+  }
+
+  static upvoteDiscussion(id: string): number {
+    const all = this.getDiscussions();
+    let newCount = 1;
+    const updated = all.map(d => {
+      if (d.id === id) {
+        newCount = (d.upvotes || 0) + 1;
+        return { ...d, upvotes: newCount };
+      }
+      return d;
+    });
+    this.setDiscussions(updated);
+    return newCount;
+  }
+
   /**
    * Refresh / Revalidate cache: simulates instant background synchronization
    */
