@@ -1,32 +1,22 @@
 import React from 'react';
 import { 
   Briefcase, 
-  TrendingUp, 
-  ShieldAlert, 
-  FileText, 
   Download, 
-  CheckCircle2, 
-  Compass, 
-  Zap, 
   Target,
-  BarChart3,
-  Layers,
-  ArrowUpRight,
-  ShieldCheck
+  ShieldAlert,
+  TrendingUp,
+  BarChart2
 } from 'lucide-react';
 import { useWorkstation } from '../context/WorkstationContext';
 
 export const MarketOverview: React.FC = () => {
-  const { selectedAsset, appMode, theme } = useWorkstation();
-
-  const isLight = theme === 'light';
+  const { selectedAsset } = useWorkstation();
 
   const handleExportSummary = () => {
     const data = {
       asset: selectedAsset.symbol,
       name: selectedAsset.name,
       price: selectedAsset.price,
-      mode: appMode,
       generatedAt: new Date().toISOString(),
       regime: 'Consolidation with Upside Breakout Bias',
       support: (selectedAsset.price * 0.955).toFixed(2),
@@ -148,7 +138,7 @@ export const MarketOverview: React.FC = () => {
       {/* Strategic Takeaways Box */}
       <div className="p-4 rounded-xl bg-white dark:bg-[#07111e] border border-slate-200 dark:border-slate-800 shadow-sm space-y-2 transition-colors">
         <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
-          Executive Market Synthesis ({appMode === 'casual' ? 'Casual Trader' : 'Professional Quant'} View)
+          Executive Market Synthesis
         </h4>
         <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
           The prevailing quantitative regime for {selectedAsset.symbol} favors strategic patience and dip accumulation near support bands. 

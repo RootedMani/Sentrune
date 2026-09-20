@@ -4,13 +4,9 @@ import {
   Sun, 
   Moon, 
   Bell, 
-  Sliders, 
-  User, 
-  Sparkles, 
   ShieldCheck, 
-  Zap, 
-  Flame,
-  BarChart2
+  Sparkles, 
+  Radio
 } from 'lucide-react';
 import { useWorkstation } from '../context/WorkstationContext';
 import { useAuth } from '../context/AuthContext';
@@ -24,12 +20,9 @@ export const Header: React.FC = () => {
     refreshFeeds, 
     language, 
     setLanguage, 
-    appMode, 
-    setAppMode,
-    theme,
-    setTheme,
+    theme, 
+    setTheme, 
     setOpenAlertsModal,
-    setOpenSettingsModal,
     alerts
   } = useWorkstation();
 
@@ -59,7 +52,7 @@ export const Header: React.FC = () => {
         {/* Price & Change Badge */}
         <div className="flex items-center gap-2 bg-slate-100 dark:bg-[#0c1a2d] px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-800">
           <span className="text-sm md:text-base font-bold font-mono text-slate-900 dark:text-white">
-            ${selectedAsset.price.toLocaleString()}
+            ${selectedAsset.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
           <span className={`text-xs font-mono font-semibold px-1.5 py-0.5 rounded ${
             isPositive
@@ -71,13 +64,12 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Controls: Stream status, Mode Switch, Alerts, Language, Theme, Account */}
+      {/* Right Controls: Live Status, Refresh, Alerts, Language, Theme, Account */}
       <div className="flex items-center gap-2 md:gap-2.5 flex-shrink-0">
         {/* Live Status indicator */}
         <div className="hidden lg:flex items-center gap-1.5 bg-slate-100 dark:bg-[#0a1829] border border-slate-200 dark:border-slate-800 text-xs px-2.5 py-1 rounded-md text-slate-700 dark:text-slate-300">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">LIVE</span>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">5s ago</span>
+          <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">LIVE STREAM</span>
         </div>
 
         {/* Refresh Feed Button */}
@@ -85,49 +77,18 @@ export const Header: React.FC = () => {
           id="header-refresh-btn"
           onClick={refreshFeeds}
           disabled={isRefreshing}
-          className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#11233d] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
-          title="Instant refresh cache"
+          className="flex items-center gap-1.5 bg-cyan-50 dark:bg-[#0c1a2d] hover:bg-cyan-100 dark:hover:bg-[#11233d] border border-cyan-200 dark:border-cyan-800/60 text-cyan-700 dark:text-cyan-300 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer disabled:opacity-50 shadow-xs"
+          title="Refresh market prices, technicals and news"
         >
           <RotateCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-cyan-500' : ''}`} />
-          <span className="hidden sm:inline">{t.refresh}</span>
+          <span>{isRefreshing ? 'Updating...' : t.refresh}</span>
         </button>
-
-        {/* Mode Selector Pill: Casual Trader vs Professional Quant */}
-        <div 
-          className="flex items-center bg-slate-100 dark:bg-[#091524] border border-slate-200 dark:border-slate-800 rounded-lg p-0.5 shadow-inner"
-          title="Switch between Casual Trader and Professional Quant mode"
-        >
-          <button
-            id="mode-toggle-casual"
-            onClick={() => setAppMode('casual')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-              appMode === 'casual'
-                ? 'bg-amber-200/80 dark:bg-amber-500/20 text-amber-900 dark:text-amber-400 border border-amber-400/50 dark:border-amber-500/30 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            <Zap className="w-3 h-3 text-amber-500" />
-            <span className="hidden sm:inline">Casual</span>
-          </button>
-          <button
-            id="mode-toggle-power"
-            onClick={() => setAppMode('power')}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-              appMode === 'power'
-                ? 'bg-cyan-200/80 dark:bg-cyan-600/30 text-cyan-900 dark:text-cyan-300 border border-cyan-400/50 dark:border-cyan-500/40 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            <BarChart2 className="w-3 h-3 text-cyan-500" />
-            <span className="hidden sm:inline">Professional</span>
-          </button>
-        </div>
 
         {/* Automated Newsletter & Price Alerts Button */}
         <button
           id="header-alerts-btn"
           onClick={() => setOpenAlertsModal(true)}
-          className="relative flex items-center gap-1.5 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#132642] border border-cyan-200 dark:border-cyan-900/60 text-cyan-700 dark:text-cyan-300 px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer"
+          className="relative flex items-center gap-1.5 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#132642] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer"
           title="Automated Newsletter & Price Alerts"
         >
           <Bell className="w-3.5 h-3.5 text-cyan-500" />
@@ -139,20 +100,20 @@ export const Header: React.FC = () => {
           )}
         </button>
 
-        {/* Language quick button */}
+        {/* Language toggle button */}
         <button
           id="header-lang-toggle"
           onClick={() => setLanguage(language === 'en' ? 'fa' : 'en')}
-          className="hidden sm:flex items-center gap-1 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#12243d] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer"
+          className="hidden sm:flex items-center gap-1 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#12243d] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer"
         >
           {language === 'en' ? 'فارسی' : 'English'}
         </button>
 
-        {/* Theme toggle matching screenshot */}
+        {/* Theme toggle */}
         <button
           id="header-theme-toggle"
           onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#12243d] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-md text-xs transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#12243d] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md text-xs transition-colors cursor-pointer"
           title="Toggle Light / Dark mode"
         >
           {theme === 'dark' ? (
@@ -168,21 +129,20 @@ export const Header: React.FC = () => {
           )}
         </button>
 
-        {/* Account / Demo System Button */}
+        {/* Account System Button */}
         {isDemo ? (
           <button
             id="header-demo-unlock-btn"
             onClick={() => openAuthModal('signup')}
-            className="flex items-center gap-1.5 bg-gradient-to-r from-amber-600/30 to-amber-500/20 hover:from-amber-600/40 hover:to-amber-500/30 border border-amber-500/40 text-amber-300 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer"
+            className="flex items-center gap-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer shadow-xs"
           >
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline">Free Sign Up</span>
-            <span className="text-[10px] bg-amber-500/30 px-1 rounded text-amber-200 uppercase font-mono">Demo</span>
+            <Sparkles className="w-3.5 h-3.5 text-cyan-200" />
+            <span className="hidden sm:inline">Sign In</span>
           </button>
         ) : (
-          <div className="flex items-center gap-1.5 bg-[#0b1b30] border border-cyan-800/60 px-2.5 py-1 rounded-md text-xs">
-            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="font-semibold text-slate-200 max-w-[90px] truncate">{user.name}</span>
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0b1b30] border border-slate-200 dark:border-cyan-800/60 px-2.5 py-1 rounded-md text-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-cyan-500" />
+            <span className="font-semibold text-slate-800 dark:text-slate-200 max-w-[90px] truncate">{user.name}</span>
             <button
               onClick={logout}
               className="text-slate-400 hover:text-rose-400 text-[11px] ml-1 transition-colors cursor-pointer"

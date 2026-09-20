@@ -369,7 +369,7 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, symbol, onRefresh, isRef
   });
 
   // Selected article for Split Reader or Detail Modal
-  const [selectedArticleId, setSelectedArticleId] = useState<number | null>(null);
+  const [selectedArticleId, setSelectedArticleId] = useState<string | number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   // Filters & Search
@@ -393,7 +393,7 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, symbol, onRefresh, isRef
   }, [language]);
 
   // Bookmarking state (persisted in localStorage)
-  const [savedIds, setSavedIds] = useState<Set<number>>(() => {
+  const [savedIds, setSavedIds] = useState<Set<string | number>>(() => {
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem('sentrune_saved_news');
@@ -406,14 +406,14 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, symbol, onRefresh, isRef
   });
 
   // Toast feedback
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<string | number | null>(null);
 
   // Per-article language toggles
-  const [itemLanguageOverrides, setItemLanguageOverrides] = useState<Record<number, 'en' | 'fa'>>({});
+  const [itemLanguageOverrides, setItemLanguageOverrides] = useState<Record<string | number, 'en' | 'fa'>>({});
 
   // AI Hook & Summary enrichment state
-  const [generatingAiIds, setGeneratingAiIds] = useState<Set<number>>(new Set());
-  const [localAiEnrichments, setLocalAiEnrichments] = useState<Record<number, Partial<NewsItem>>>({});
+  const [generatingAiIds, setGeneratingAiIds] = useState<Set<string | number>>(new Set());
+  const [localAiEnrichments, setLocalAiEnrichments] = useState<Record<string | number, Partial<NewsItem>>>({});
 
   const handleGenerateAiHook = async (item: NewsItem) => {
     if (!item) return;
@@ -462,7 +462,7 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, symbol, onRefresh, isRef
     }
   }, [viewMode]);
 
-  const toggleBookmark = (id: number, e?: React.MouseEvent) => {
+  const toggleBookmark = (id: string | number, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setSavedIds((prev) => {
       const next = new Set(prev);
@@ -480,11 +480,12 @@ export const NewsTab: React.FC<NewsTabProps> = ({ news, symbol, onRefresh, isRef
     });
   };
 
-  const toggleItemLanguage = (id: number, currentLang: 'en' | 'fa', e?: React.MouseEvent) => {
+  const toggleItemLanguage = (id: string | number, currentLang: 'en' | 'fa', e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    const newLang: 'en' | 'fa' = currentLang === 'fa' ? 'en' : 'fa';
     setItemLanguageOverrides((prev) => ({
       ...prev,
-      [id]: currentLang === 'fa' ? 'en' : 'fa',
+      [id]: newLang,
     }));
   };
 

@@ -111,141 +111,309 @@ export const INITIAL_ASSETS: Asset[] = [
 export const INITIAL_NEWS: NewsItem[] = [
   {
     id: 'news-1',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 12,
+    time: '2m ago',
+    timestamp: Date.now() - 1000 * 60 * 2,
     source: '24/7 WALL ST.',
     headline: 'Bitcoin Just Exploded 40% From Its July Low — Is $100,000 Back on the Table?',
     marketTakeaway: 'Macro liquidity expands as spot ETF volume re-accelerates past $1.4B daily average.',
-    isHighImpact: true, // Selected few has 🔥
+    isHighImpact: true,
     finbertScore: 0.72,
     sentiment: 'bullish',
-    relatedAssets: ['BTC'],
+    relatedAssets: ['BTC', 'ALL'],
     category: 'crypto',
     readTime: '2 min read'
   },
   {
     id: 'news-2',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 25,
-    source: 'FORBES',
-    headline: 'Trump Issues Serious Fed Warning As Bitcoin Braces For A Huge Price Shock',
-    marketTakeaway: 'Key support at $78,000 tested as traders weigh geopolitical statements against bond yields.',
-    isHighImpact: true, // Selected few has 🔥
-    finbertScore: -0.42,
-    sentiment: 'bearish',
-    relatedAssets: ['BTC', 'ETH'],
-    category: 'macro',
+    time: '5m ago',
+    timestamp: Date.now() - 1000 * 60 * 5,
+    source: 'BLOOMBERG',
+    headline: 'NVIDIA Next-Gen Blackwell Hyperscale Deliveries Exceed Expectations in Q3',
+    marketTakeaway: 'Enterprise compute backlog extended into 2027 as cloud giants boost AI infrastructure capex.',
+    isHighImpact: true,
+    finbertScore: 0.86,
+    sentiment: 'bullish',
+    relatedAssets: ['NVDA', 'ALL'],
+    category: 'equities',
     readTime: '3 min read'
   },
   {
     id: 'news-3',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 45,
-    source: 'COINGAPE',
-    headline: 'Bitcoin and Ethereum Price Prediction Ahead of US CPI and ECB Rate Decision',
-    marketTakeaway: 'Consolidation band tightens ahead of upcoming monetary policy prints this Thursday.',
-    isHighImpact: false, // NOT high impact, no fire emoji
-    finbertScore: 0.05,
-    sentiment: 'neutral',
-    relatedAssets: ['BTC', 'ETH'],
+    time: '8m ago',
+    timestamp: Date.now() - 1000 * 60 * 8,
+    source: 'FORBES',
+    headline: 'Trump Issues Serious Fed Warning As Global Markets Brace For Key Rate Decision',
+    marketTakeaway: 'Key support at $78,000 tested as traders weigh geopolitical statements against bond yields.',
+    isHighImpact: true,
+    finbertScore: -0.42,
+    sentiment: 'bearish',
+    relatedAssets: ['BTC', 'ETH', 'ALL'],
     category: 'macro',
-    readTime: '4 min read'
+    readTime: '3 min read'
   },
   {
     id: 'news-4',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 75,
-    source: 'COINDESK',
-    headline: 'Bitcoin tests key resistance levels amid institutional ETF inflows and macro liquidity',
-    marketTakeaway: 'Institutional accumulation absorbs short-side orderbook resistance near $81,000.',
-    isHighImpact: false, // NO fire emoji
-    finbertScore: 0.68,
+    time: '12m ago',
+    timestamp: Date.now() - 1000 * 60 * 12,
+    source: 'REUTERS',
+    headline: 'Apple Supply Chain Adjusts Forecast on Next-Gen Silicon 3nm Fab Allocations',
+    marketTakeaway: 'Taiwan Semiconductor secures high-yield allocation with estimated 14% power efficiency bump.',
+    isHighImpact: true,
+    finbertScore: 0.58,
     sentiment: 'bullish',
-    relatedAssets: ['BTC'],
-    category: 'crypto',
-    readTime: '3 min read'
-  },
-  {
-    id: 'news-5',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 110,
-    source: 'COINDESK',
-    headline: 'British investor thought he lost $2,000 in bitcoin in 2012. He just recovered $4.5 million',
-    marketTakeaway: 'Long-term dormant wallet reactivation highlights ongoing self-custody recovery cases.',
-    isHighImpact: false,
-    finbertScore: 0.12,
-    sentiment: 'neutral',
-    relatedAssets: ['BTC'],
-    category: 'crypto',
-    readTime: '2 min read'
-  },
-  {
-    id: 'news-6',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 140,
-    source: 'COINPEDIA',
-    headline: 'Why Is Ethereum Still Below $3000? While Bitcoin Price Hits $82,000 — Here’s What You Need to Know',
-    marketTakeaway: 'L2 fee capture model continues to compress L1 base-layer burn velocity.',
-    isHighImpact: false,
-    finbertScore: -0.28,
-    sentiment: 'bearish',
-    relatedAssets: ['ETH', 'BTC'],
-    category: 'crypto',
-    readTime: '3 min read'
-  },
-  {
-    id: 'news-7',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 180,
-    source: 'COINTELEGRAPH',
-    headline: 'Here’s what happened in crypto today',
-    marketTakeaway: 'Daily roundup of derivatives open interest, stablecoin peg stability, and cross-chain volume.',
-    isHighImpact: false,
-    finbertScore: 0.00,
-    sentiment: 'neutral',
-    relatedAssets: ['BTC', 'ETH', 'SOL'],
-    category: 'crypto',
-    readTime: '5 min read'
-  },
-  {
-    id: 'news-8',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 220,
-    source: 'COINTELEGRAPH',
-    headline: 'Poland upholds crypto bill veto as Zondacrypto scandal widens',
-    marketTakeaway: 'Regulatory compliance pressures mount for Central European virtual asset providers.',
-    isHighImpact: false,
-    finbertScore: -1.00,
-    sentiment: 'bearish',
-    relatedAssets: ['BTC', 'ETH'],
-    category: 'regulatory',
-    readTime: '3 min read'
-  },
-  {
-    id: 'news-9',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 260,
-    source: 'BLOOMBERG',
-    headline: 'Apple Supply Chain Adjusts Forecast on Next-Gen Silicon Fab Allocations',
-    marketTakeaway: '3nm foundry allocation secured with estimated 12% energy efficiency improvements.',
-    isHighImpact: true, // Selected few has 🔥
-    finbertScore: 0.54,
-    sentiment: 'bullish',
-    relatedAssets: ['AAPL'],
+    relatedAssets: ['AAPL', 'ALL'],
     category: 'equities',
     readTime: '4 min read'
   },
   {
-    id: 'news-10',
-    time: 'Sep 5, 2026',
-    timestamp: Date.now() - 1000 * 60 * 300,
-    source: 'REUTERS',
-    headline: 'Microsoft Expands Enterprise AI Infrastructure with New Sovereign Cloud Datacenters',
-    marketTakeaway: 'Azure capital expenditure guided higher as European public sector demand accelerates.',
+    id: 'news-5',
+    time: '15m ago',
+    timestamp: Date.now() - 1000 * 60 * 15,
+    source: 'COINDESK',
+    headline: 'Ethereum Staking Supply Crosses 35 Million ETH Milestone as Layer-2 Activity Surges',
+    marketTakeaway: 'Liquid circulation drops to 5-year lows on centralized exchanges creating supply scarcity.',
     isHighImpact: false,
-    finbertScore: 0.61,
+    finbertScore: 0.64,
     sentiment: 'bullish',
-    relatedAssets: ['MSFT'],
+    relatedAssets: ['ETH', 'ALL'],
+    category: 'crypto',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-6',
+    time: '19m ago',
+    timestamp: Date.now() - 1000 * 60 * 19,
+    source: 'WALL STREET JOURNAL',
+    headline: 'Microsoft Expands Sovereign Cloud Infrastructure in Europe with $4.8B Investment',
+    marketTakeaway: 'Azure commercial cloud revenue growth guidance raised by 180 basis points for upcoming fiscal year.',
+    isHighImpact: true,
+    finbertScore: 0.69,
+    sentiment: 'bullish',
+    relatedAssets: ['MSFT', 'ALL'],
+    category: 'equities',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-7',
+    time: '24m ago',
+    timestamp: Date.now() - 1000 * 60 * 24,
+    source: 'COINTELEGRAPH',
+    headline: 'Solana DEX Volume Flips Ethereum Mainnet as Firedancer Client Enters Production Testnet',
+    marketTakeaway: 'Sub-second finality benchmark reaches 65,000 TPS under simulated high-congestion stress tests.',
+    isHighImpact: true,
+    finbertScore: 0.78,
+    sentiment: 'bullish',
+    relatedAssets: ['SOL', 'ALL'],
+    category: 'crypto',
+    readTime: '2 min read'
+  },
+  {
+    id: 'news-8',
+    time: '28m ago',
+    timestamp: Date.now() - 1000 * 60 * 28,
+    source: 'FINANCIAL TIMES',
+    headline: 'Federal Reserve Signals Liquidity Neutrality as Core PCE Inflation Cools to 2.4%',
+    marketTakeaway: 'Lower Treasury yields provide breathing room for mega-cap tech and decentralized assets.',
+    isHighImpact: false,
+    finbertScore: 0.35,
+    sentiment: 'bullish',
+    relatedAssets: ['ALL', 'AAPL', 'MSFT', 'BTC'],
+    category: 'macro',
+    readTime: '4 min read'
+  },
+  {
+    id: 'news-9',
+    time: '34m ago',
+    timestamp: Date.now() - 1000 * 60 * 34,
+    source: 'CNBC',
+    headline: 'NVIDIA and Apple Form Joint Hardware Acceleration Standards Group for Edge AI',
+    marketTakeaway: 'Cross-platform unified memory architecture accelerates low-latency inference on consumer devices.',
+    isHighImpact: true,
+    finbertScore: 0.81,
+    sentiment: 'bullish',
+    relatedAssets: ['NVDA', 'AAPL', 'ALL'],
+    category: 'equities',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-10',
+    time: '39m ago',
+    timestamp: Date.now() - 1000 * 60 * 39,
+    source: 'COINGAPE',
+    headline: 'Bitcoin Orderbook Depth Shows $420M Absorption Wall at $79,200',
+    marketTakeaway: 'Whale institutional limit bids absorb perpetual funding flush, preventing cascading liquidations.',
+    isHighImpact: false,
+    finbertScore: 0.44,
+    sentiment: 'bullish',
+    relatedAssets: ['BTC', 'ALL'],
+    category: 'crypto',
+    readTime: '2 min read'
+  },
+  {
+    id: 'news-11',
+    time: '44m ago',
+    timestamp: Date.now() - 1000 * 60 * 44,
+    source: 'BARRONS',
+    headline: 'Microsoft Enterprise Copilot Seat Penetration Hits 40% Across Fortune 500 Clients',
+    marketTakeaway: 'Annualized recurring software revenue climbs to new record, supporting valuation multiples.',
+    isHighImpact: false,
+    finbertScore: 0.62,
+    sentiment: 'bullish',
+    relatedAssets: ['MSFT', 'ALL'],
+    category: 'equities',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-12',
+    time: '50m ago',
+    timestamp: Date.now() - 1000 * 60 * 50,
+    source: 'COINPEDIA',
+    headline: 'Why Ethereum Gas Fees Dropped 85% While Network Settlement Volume Reached All-Time High',
+    marketTakeaway: 'EIP-4844 proto-danksharding blobs absorb bulk throughput without congesting Base layer 1.',
+    isHighImpact: false,
+    finbertScore: 0.18,
+    sentiment: 'neutral',
+    relatedAssets: ['ETH', 'ALL'],
+    category: 'crypto',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-13',
+    time: '56m ago',
+    timestamp: Date.now() - 1000 * 60 * 56,
+    source: 'MARKETWATCH',
+    headline: 'Apple Services Revenue Outpaces Hardware Unit Cycle for Third Consecutive Quarter',
+    marketTakeaway: 'High gross-margin ecosystem retention provides stability during global hardware replacement cycles.',
+    isHighImpact: false,
+    finbertScore: 0.49,
+    sentiment: 'bullish',
+    relatedAssets: ['AAPL', 'ALL'],
+    category: 'equities',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-14',
+    time: '1h ago',
+    timestamp: Date.now() - 1000 * 60 * 65,
+    source: 'DECRYPT',
+    headline: 'Solana Mobile Chapter 2 Pre-Orders Cross 180,000 Units Worldwide',
+    marketTakeaway: 'Decentralized mobile ecosystem gains momentum as native crypto payments reach physical retail.',
+    isHighImpact: false,
+    finbertScore: 0.52,
+    sentiment: 'bullish',
+    relatedAssets: ['SOL', 'ALL'],
+    category: 'crypto',
+    readTime: '2 min read'
+  },
+  {
+    id: 'news-15',
+    time: '1h ago',
+    timestamp: Date.now() - 1000 * 60 * 72,
+    source: 'REUTERS',
+    headline: 'SEC Approves Streamlined Dual-Listing Standards for Digital Asset Index Products',
+    marketTakeaway: 'Regulatory clarity opens institutional doors for sovereign pension allocations.',
+    isHighImpact: true,
+    finbertScore: 0.74,
+    sentiment: 'bullish',
+    relatedAssets: ['BTC', 'ETH', 'SOL', 'ALL'],
+    category: 'regulatory',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-16',
+    time: '1h ago',
+    timestamp: Date.now() - 1000 * 60 * 85,
+    source: 'INVESTORS BUSINESS DAILY',
+    headline: 'NVIDIA GPU Cluster Utilization in Autonomous Driving and Robotics Hits 98%',
+    marketTakeaway: 'Diversification away from pure LLM training into physical AI creates resilient multi-year revenue moat.',
+    isHighImpact: false,
+    finbertScore: 0.71,
+    sentiment: 'bullish',
+    relatedAssets: ['NVDA', 'ALL'],
+    category: 'equities',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-17',
+    time: '2h ago',
+    timestamp: Date.now() - 1000 * 60 * 115,
+    source: 'BLOOMBERG',
+    headline: 'Global Central Banks Expand Gold and Bitcoin Reserves as Currency Diversification Continues',
+    marketTakeaway: 'De-dollarization thematic supports hard monetary store-of-value assets against fiat debasement.',
+    isHighImpact: true,
+    finbertScore: 0.65,
+    sentiment: 'bullish',
+    relatedAssets: ['BTC', 'ALL'],
+    category: 'macro',
+    readTime: '4 min read'
+  },
+  {
+    id: 'news-18',
+    time: '2h ago',
+    timestamp: Date.now() - 1000 * 60 * 130,
+    source: 'THE VERGE',
+    headline: 'Microsoft Gaming and Cloud Divisions Post Record Engagement on Cross-Platform Streaming',
+    marketTakeaway: 'Cloud GPU streaming architecture decreases consumer hardware barriers in emerging markets.',
+    isHighImpact: false,
+    finbertScore: 0.41,
+    sentiment: 'bullish',
+    relatedAssets: ['MSFT', 'ALL'],
+    category: 'equities',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-19',
+    time: '2h ago',
+    timestamp: Date.now() - 1000 * 60 * 145,
+    source: 'COINDESK',
+    headline: 'Solana Real-World Asset (RWA) Tokenization Value Exceeds $1.2B Following Institutional Treasury Inflows',
+    marketTakeaway: 'Fast block settlement and negligible gas fees attract tokenized private credit funds.',
+    isHighImpact: false,
+    finbertScore: 0.63,
+    sentiment: 'bullish',
+    relatedAssets: ['SOL', 'ALL'],
+    category: 'crypto',
+    readTime: '2 min read'
+  },
+  {
+    id: 'news-20',
+    time: '3h ago',
+    timestamp: Date.now() - 1000 * 60 * 180,
+    source: 'TECHCRUNCH',
+    headline: 'Apple Siri Next-Gen Local LLM Demonstrates 15ms Latency on M4 Neural Engine',
+    marketTakeaway: 'Consumer on-device privacy combined with cloud intelligence positions Apple uniquely against standalone assistants.',
+    isHighImpact: true,
+    finbertScore: 0.77,
+    sentiment: 'bullish',
+    relatedAssets: ['AAPL', 'ALL'],
+    category: 'equities',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-21',
+    time: '3h ago',
+    timestamp: Date.now() - 1000 * 60 * 210,
+    source: 'COINTELEGRAPH',
+    headline: 'Ethereum Restaking Protocol EigenLayer TVL Reclaims $18B as AVS Networks Launch',
+    marketTakeaway: 'Cryptoeconomic security sharing unlocks yield opportunities for long-term institutional holders.',
+    isHighImpact: false,
+    finbertScore: 0.55,
+    sentiment: 'bullish',
+    relatedAssets: ['ETH', 'ALL'],
+    category: 'crypto',
+    readTime: '3 min read'
+  },
+  {
+    id: 'news-22',
+    time: '4h ago',
+    timestamp: Date.now() - 1000 * 60 * 240,
+    source: 'BLOOMBERG',
+    headline: 'Semiconductor Lead Times Normalize to Pre-Shortage Historic Levels of 12 Weeks',
+    marketTakeaway: 'Improved supply chains ease margin compression across hardware and server manufacturers.',
+    isHighImpact: false,
+    finbertScore: 0.28,
+    sentiment: 'neutral',
+    relatedAssets: ['NVDA', 'AAPL', 'MSFT', 'ALL'],
     category: 'equities',
     readTime: '3 min read'
   }
@@ -255,6 +423,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-1',
     author: 'QuantDesk_Alpha',
+    handle: '@quant_alpha',
     platform: 'X / Twitter',
     time: '18m ago',
     content: 'Orderbook delta on $AAPL showing heavy absorption at the 318-319 block. Options gamma flips positive above 322.',
@@ -268,6 +437,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-2',
     author: 'TechOptionsDesk',
+    handle: '@tech_options',
     platform: 'StockTwits',
     time: '32m ago',
     content: 'Big call sweep volume in $AAPL next month $330 contracts. Institutional buyers defending the 20-day exponential moving average.',
@@ -281,6 +451,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-3',
     author: 'BearCaveAlpha',
+    handle: '@bearcave',
     platform: 'StockTwits',
     time: '1h ago',
     content: '$AAPL 4H RSI touching 71 with slight divergence. Look for retest of the $315 support shelf before initiating fresh swing longs.',
@@ -294,6 +465,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-4',
     author: 'MacroWhale',
+    handle: '@macro_whale',
     platform: 'Reddit r/stocks',
     time: '42m ago',
     content: 'Fed swap pricing suggests high probability of rate cuts by Q4. Tech multiples could see expansion if 10yr yield stays under 4.15%. $MSFT stands to gain maximum enterprise flow.',
@@ -307,6 +479,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-5',
     author: 'CloudValueQuant',
+    handle: '@cloud_quant',
     platform: 'X / Twitter',
     time: '2h ago',
     content: '$MSFT breaking out of 6-week base. Enterprise Azure run-rate acceleration is still underestimated by Wall Street consensus.',
@@ -320,6 +493,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-6',
     author: 'BitSatoshi_Node',
+    handle: '@satoshi_node',
     platform: 'Telegram Alpha Desk',
     time: '1h ago',
     content: 'BTC exchange reserves drop to 3-year low of 1.94M coins. Spot bids aggressively absorbing spot desk selling above $80,000.',
@@ -333,6 +507,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-7',
     author: 'VolSurfaceTrader',
+    handle: '@vol_surface',
     platform: 'X / Twitter',
     time: '45m ago',
     content: '$BTC 30-day implied volatility skew flips to deep call premium. Options market pricing $92k+ probability at 44% before month-end.',
@@ -346,6 +521,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-8',
     author: 'WhaleWatcher_Pro',
+    handle: '@whalewatch',
     platform: 'Telegram Alpha Desk',
     time: '15m ago',
     content: '🚨 Over 2,800 $BTC moved from Coinbase Prime to private institutional multi-sig custody. Pure accumulation behavior.',
@@ -359,6 +535,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-9',
     author: 'DeFi_Auditor',
+    handle: '@defi_auditor',
     platform: 'Reddit r/ethfinance',
     time: '2h ago',
     content: 'Layer 2 gas consumption hits all time high while L1 fees stay suppressed. Good for users, mixed for token burn velocity on $ETH.',
@@ -372,6 +549,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-10',
     author: 'EtherStaker_OG',
+    handle: '@ether_staker',
     platform: 'StockTwits',
     time: '50m ago',
     content: '$ETH staking ratio hits 29.5% of circulating supply. Liquid supply on exchanges is razor thin if spot demand returns.',
@@ -385,6 +563,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-11',
     author: 'SemisAnalyst',
+    handle: '@semis_analyst',
     platform: 'X / Twitter',
     time: '25m ago',
     content: '$NVDA Blackwell server rack shipments running ahead of street timeline. Demand from hyperscalers showing no sign of pause through 2026.',
@@ -398,6 +577,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-12',
     author: 'OptionsGreeksPro',
+    handle: '@greeks_pro',
     platform: 'Reddit r/wallstreetbets',
     time: '1h ago',
     content: '$NVDA dealer gamma wall is pinned tightly at $140. Watch for an explosive breakout move once weekly options contracts settle.',
@@ -411,6 +591,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-13',
     author: 'SolanaSpeedster',
+    handle: '@sol_speedster',
     platform: 'StockTwits',
     time: '35m ago',
     content: '$SOL daily DEX volume crosses $3.8B, leading all blockchain networks. Firedancer testnet throughput benchmarks look remarkable.',
@@ -424,6 +605,7 @@ export const INITIAL_DISCUSSIONS = [
   {
     id: 'disc-14',
     author: 'DeFiVelocity',
+    handle: '@defi_velocity',
     platform: 'Telegram Alpha Desk',
     time: '1h ago',
     content: '$SOL perpetual funding rate back to neutral after flushing overleveraged longs down to $182. Clear path back to $200.',
@@ -433,18 +615,69 @@ export const INITIAL_DISCUSSIONS = [
     isFollowed: true,
     asset: 'SOL',
     tags: ['#Perps', '#FundingRate']
-  },
-  {
-    id: 'disc-15',
-    author: 'EV_EnergyQuant',
-    platform: 'X / Twitter',
-    time: '1h ago',
-    content: '$TSLA Megapack deployments up 125% YoY. Wall Street is valuing Tesla purely as an automaker while energy division is printing high-margin software-like cashflows.',
-    sentiment: 'bullish',
-    upvotes: 680,
-    commentCount: 140,
-    isFollowed: true,
-    asset: 'TSLA',
-    tags: ['#Megapack', '#EnergyTransition']
   }
 ];
+
+// Dynamically generate a fresh breaking news item on each live tick/refresh
+let liveFeedCounter = 100;
+export const generateLiveNewsItem = (symbol?: string): NewsItem => {
+  liveFeedCounter++;
+  const assets = ['BTC', 'NVDA', 'AAPL', 'MSFT', 'ETH', 'SOL'];
+  const targetSymbol = symbol && symbol !== 'ALL' ? symbol : assets[Math.floor(Math.random() * assets.length)];
+  
+  const newsTemplates = [
+    {
+      source: 'BLOOMBERG TERMINAL',
+      headline: `Institutional Block Trade Detected in $${targetSymbol} Above Key VWAP Corridor`,
+      marketTakeaway: 'Dark pool delta surges as quantitative desks rebalance algorithmic index allocations.',
+      sentiment: 'bullish',
+      finbertScore: 0.76,
+      category: 'equities' as const,
+      isHighImpact: true
+    },
+    {
+      source: 'REUTERS LIVE',
+      headline: `$${targetSymbol} Orderbook Imbalance Flips 68% Bullish Following Spot Desk Inflow`,
+      marketTakeaway: 'Liquidity depth thickens on bid side, pushing immediate resistance 2.4% higher.',
+      sentiment: 'bullish',
+      finbertScore: 0.68,
+      category: 'equities' as const,
+      isHighImpact: false
+    },
+    {
+      source: 'FINANCIAL TIMES',
+      headline: `Treasury Yield Curve Shift Triggers Multi-Asset Momentum Reversal Across $${targetSymbol}`,
+      marketTakeaway: 'Benchmark yield drop provides supportive tailwinds across risk-weighted holdings.',
+      sentiment: 'bullish',
+      finbertScore: 0.54,
+      category: 'macro' as const,
+      isHighImpact: false
+    },
+    {
+      source: 'COINDESK TICKER',
+      headline: `On-Chain Derivative Volatility Surfaces Spike on $${targetSymbol} Cross-Margin Books`,
+      marketTakeaway: 'Implied volatility spreads widen ahead of upcoming economic calendar disclosures.',
+      sentiment: 'neutral',
+      finbertScore: 0.08,
+      category: 'crypto' as const,
+      isHighImpact: false
+    }
+  ];
+
+  const template = newsTemplates[Math.floor(Math.random() * newsTemplates.length)];
+
+  return {
+    id: `live-feed-${liveFeedCounter}-${Date.now()}`,
+    time: 'Just now',
+    timestamp: Date.now(),
+    source: template.source,
+    headline: template.headline,
+    marketTakeaway: template.marketTakeaway,
+    isHighImpact: template.isHighImpact,
+    finbertScore: template.finbertScore,
+    sentiment: template.sentiment,
+    relatedAssets: [targetSymbol, 'ALL'],
+    category: template.category,
+    readTime: '1 min read'
+  };
+};

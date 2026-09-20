@@ -627,7 +627,7 @@ export const ArchitectureLab: React.FC<ArchitectureLabProps> = ({
                     language === 'fa' ? toPersianDigits(Number(value).toFixed(4)) : Number(value).toFixed(4),
                     name,
                   ]}
-                  labelFormatter={(lbl) => `Epoch ${language === 'fa' ? toPersianDigits(lbl) : lbl}`}
+                  labelFormatter={(lbl) => `Epoch ${language === 'fa' ? toPersianDigits(String(lbl)) : lbl}`}
                 />
                 <Line
                   type="monotone"

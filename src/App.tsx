@@ -14,6 +14,7 @@ import { AlertsView } from './components/AlertsView';
 import { NewsletterAlertsModal } from './components/NewsletterAlertsModal';
 import { AccountModal } from './components/AccountModal';
 import { SettingsModal } from './components/SettingsModal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const WorkstationMain: React.FC = () => {
   const { activeTab, language, theme } = useWorkstation();
@@ -30,7 +31,7 @@ const WorkstationMain: React.FC = () => {
           : 'bg-[#050b14] text-slate-100'
       }`}
     >
-      {/* Left Sidebar matching screenshot */}
+      {/* Left Sidebar */}
       <Sidebar />
 
       {/* Main Workspace Area */}
@@ -41,16 +42,18 @@ const WorkstationMain: React.FC = () => {
         {/* Tab Navigation */}
         <TabsNav />
 
-        {/* Active Tab Viewport */}
+        {/* Active Tab Viewport with Error Boundary */}
         <main className="flex-1 overflow-y-auto bg-slate-50 dark:bg-gradient-to-b dark:from-[#060e1a] dark:to-[#040810] transition-colors">
-          {activeTab === 'news' && <NewsTable />}
-          {activeTab === 'price' && <PriceChart />}
-          {activeTab === 'technical' && <TechnicalAnalysis />}
-          {activeTab === 'sentiment' && <SentimentPulse />}
-          {activeTab === 'social' && <SocialPulse />}
-          {activeTab === 'overview' && <MarketOverview />}
-          {activeTab === 'alerts' && <AlertsView />}
-          {activeTab === 'settings' && <MarketOverview />}
+          <ErrorBoundary fallbackTitle="Tab Content View">
+            {activeTab === 'news' && <NewsTable />}
+            {activeTab === 'price' && <PriceChart />}
+            {activeTab === 'technical' && <TechnicalAnalysis />}
+            {activeTab === 'sentiment' && <SentimentPulse />}
+            {activeTab === 'social' && <SocialPulse />}
+            {activeTab === 'overview' && <MarketOverview />}
+            {activeTab === 'alerts' && <AlertsView />}
+            {activeTab === 'settings' && <MarketOverview />}
+          </ErrorBoundary>
         </main>
       </div>
 

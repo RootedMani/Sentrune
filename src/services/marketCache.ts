@@ -1,106 +1,94 @@
 import { NewsItem, CacheMetadata } from '../types';
-import { INITIAL_NEWS, INITIAL_DISCUSSIONS } from '../data/mockMarketData';
+import { INITIAL_NEWS, INITIAL_DISCUSSIONS, generateLiveNewsItem } from '../data/mockMarketData';
 
 const CACHE_KEYS = {
-  NEWS: 'sentrune_cached_news_v1',
-  DISCUSSIONS: 'sentrune_cached_discussions_v1',
-  META: 'sentrune_cache_meta_v1',
-  TTL: 'sentrune_cache_ttl_seconds_v1'
+  NEWS: 'sentrune_cached_news_v2',
+  DISCUSSIONS: 'sentrune_cached_discussions_v2',
+  META: 'sentrune_cache_meta_v2',
+  TTL: 'sentrune_cache_ttl_seconds_v2'
 };
 
-// Default TTL: 3 minutes (180 seconds)
 const DEFAULT_TTL_MS = 180 * 1000;
 
-// L1 In-Memory Cache for 0ms sub-millisecond lookups
+// L1 In-Memory Cache for ultra-fast 0ms lookups
 const memoryStore = new Map<string, { data: any; timestamp: number }>();
 
 export class MarketCacheService {
   private static hitCount = 0;
 
   /**
-   * Get cached news items with Stale-While-Revalidate strategy.
-   * Returns data immediately from L1 memory or L2 localStorage.
+   * Get cached news items.
+   * If symbol is provided and not 'ALL', returns items that match the symbol OR are broad market/macro ('ALL').
    */
   static getNews(symbol?: string): { items: NewsItem[]; meta: CacheMetadata } {
     const startTime = performance.now();
-    const cacheKey = symbol ? `${CACHE_KEYS.NEWS}_${symbol}` : CACHE_KEYS.NEWS;
+    const cacheKey = CACHE_KEYS.NEWS;
 
-    // 1. Check L1 Memory Cache (Fastest - 0ms)
+    let allItems: NewsItem[] = [];
+    let source: 'memory' | 'local_storage' = 'memory';
+    let cacheTimestamp = Date.now();
+
+    // 1. Check L1 Memory Cache
     if (memoryStore.has(cacheKey)) {
       const entry = memoryStore.get(cacheKey)!;
+      allItems = entry.data;
+      cacheTimestamp = entry.timestamp;
       this.hitCount++;
-      const latencyMs = Number((performance.now() - startTime).toFixed(2));
-      const isStale = Date.now() - entry.timestamp > this.getTTL();
-
-      let items: NewsItem[] = entry.data;
-      if (symbol) {
-        items = items.filter(n => n.relatedAssets.includes(symbol));
+    } else {
+      // 2. Check L2 LocalStorage
+      try {
+        const serialized = localStorage.getItem(cacheKey);
+        if (serialized) {
+          const parsed = JSON.parse(serialized);
+          memoryStore.set(cacheKey, parsed);
+          allItems = parsed.data;
+          cacheTimestamp = parsed.timestamp;
+          source = 'local_storage';
+          this.hitCount++;
+        }
+      } catch {
+        // ignore storage errors
       }
 
-      return {
-        items,
-        meta: {
-          lastUpdated: entry.timestamp,
-          itemCount: items.length,
-          hitCount: this.hitCount,
-          isStale,
-          latencyMs,
-          source: 'memory'
-        }
-      };
-    }
-
-    // 2. Check L2 LocalStorage Cache
-    try {
-      const serialized = localStorage.getItem(cacheKey);
-      if (serialized) {
-        const parsed = JSON.parse(serialized);
-        memoryStore.set(cacheKey, parsed);
-        this.hitCount++;
-        const latencyMs = Number((performance.now() - startTime).toFixed(2));
-        const isStale = Date.now() - parsed.timestamp > this.getTTL();
-
-        let items: NewsItem[] = parsed.data;
-        if (symbol) {
-          items = items.filter(n => n.relatedAssets.includes(symbol));
-        }
-
-        return {
-          items,
-          meta: {
-            lastUpdated: parsed.timestamp,
-            itemCount: items.length,
-            hitCount: this.hitCount,
-            isStale,
-            latencyMs,
-            source: 'local_storage'
-          }
-        };
+      // 3. Fallback to Initial Seed Data if empty
+      if (!allItems || allItems.length === 0) {
+        allItems = INITIAL_NEWS;
+        this.setNews(allItems);
+        cacheTimestamp = Date.now();
       }
-    } catch {
-      // localStorage may fail in restricted environments; fallback safely
     }
 
-    // 3. Pre-warmed cold start fallback: Initialize immediately with seed data
-    // This prevents the user from ever seeing an endless "Loading news data..." screen!
-    const seedData = INITIAL_NEWS;
-    this.setNews(seedData);
-
-    let items = seedData;
-    if (symbol) {
-      items = items.filter(n => n.relatedAssets.includes(symbol));
+    // Filter items appropriately
+    let filtered = allItems;
+    if (symbol && symbol !== 'ALL') {
+      const upperSym = symbol.toUpperCase();
+      filtered = allItems.filter(item => {
+        if (!item.relatedAssets || item.relatedAssets.length === 0) return true;
+        return (
+          item.relatedAssets.includes(upperSym) ||
+          item.relatedAssets.includes('ALL') ||
+          item.category === 'macro'
+        );
+      });
+      // If asset has fewer than 4 items, backfill with top macro/market news
+      if (filtered.length < 4) {
+        const generalStories = allItems.filter(i => !filtered.some(f => f.id === i.id));
+        filtered = [...filtered, ...generalStories.slice(0, 6 - filtered.length)];
+      }
     }
 
     const latencyMs = Number((performance.now() - startTime).toFixed(2));
+    const isStale = Date.now() - cacheTimestamp > this.getTTL();
+
     return {
-      items,
+      items: filtered,
       meta: {
-        lastUpdated: Date.now(),
-        itemCount: items.length,
-        hitCount: ++this.hitCount,
-        isStale: false,
+        lastUpdated: cacheTimestamp,
+        itemCount: filtered.length,
+        hitCount: this.hitCount,
+        isStale,
         latencyMs,
-        source: 'memory'
+        source
       }
     };
   }
@@ -108,8 +96,8 @@ export class MarketCacheService {
   /**
    * Save news items to both L1 memory and L2 localStorage
    */
-  static setNews(items: NewsItem[], symbol?: string): void {
-    const cacheKey = symbol ? `${CACHE_KEYS.NEWS}_${symbol}` : CACHE_KEYS.NEWS;
+  static setNews(items: NewsItem[]): void {
+    const cacheKey = CACHE_KEYS.NEWS;
     const entry = {
       data: items,
       timestamp: Date.now()
@@ -125,9 +113,20 @@ export class MarketCacheService {
   }
 
   /**
-   * Get cached discussions
+   * Injects a new live news headline into the cached feed (simulating a live streaming news desk)
    */
-  static getDiscussions(assetSymbol?: string) {
+  static injectLiveTick(symbol?: string): NewsItem {
+    const current = this.getNews().items;
+    const freshItem = generateLiveNewsItem(symbol);
+    const updated = [freshItem, ...current.slice(0, 45)];
+    this.setNews(updated);
+    return freshItem;
+  }
+
+  /**
+   * Get cached discussions with full field validation
+   */
+  static getDiscussions(assetSymbol?: string): any[] {
     const cacheKey = CACHE_KEYS.DISCUSSIONS;
     let data = INITIAL_DISCUSSIONS;
 
@@ -138,23 +137,24 @@ export class MarketCacheService {
         const stored = localStorage.getItem(cacheKey);
         if (stored) {
           const parsed = JSON.parse(stored);
-          memoryStore.set(cacheKey, parsed);
-          data = parsed.data;
-        } else {
-          this.setDiscussions(INITIAL_DISCUSSIONS);
+          if (Array.isArray(parsed.data) && parsed.data.length > 0) {
+            memoryStore.set(cacheKey, parsed);
+            data = parsed.data;
+          }
         }
       } catch {
-        data = INITIAL_DISCUSSIONS;
+        // fallback
       }
     }
 
-    if (assetSymbol) {
-      return data.filter(d => d.asset === assetSymbol);
+    if (assetSymbol && assetSymbol !== 'ALL') {
+      const filtered = data.filter(d => d.asset?.toUpperCase() === assetSymbol.toUpperCase());
+      return filtered.length > 0 ? filtered : data;
     }
     return data;
   }
 
-  static setDiscussions(discussions: any[]) {
+  static setDiscussions(discussions: any[]): void {
     const entry = { data: discussions, timestamp: Date.now() };
     memoryStore.set(CACHE_KEYS.DISCUSSIONS, entry);
     try {
@@ -163,26 +163,28 @@ export class MarketCacheService {
   }
 
   static addDiscussion(post: {
-    author: string;
-    platform: string;
+    author?: string;
+    handle?: string;
+    platform?: string;
     content: string;
-    sentiment: 'bullish' | 'bearish' | 'neutral';
+    sentiment?: 'bullish' | 'bearish' | 'neutral';
     asset: string;
     tags?: string[];
-  }) {
+  }): any {
     const all = this.getDiscussions();
     const newPost = {
       id: `disc-user-${Date.now()}`,
       author: post.author || 'AlphaTrader',
+      handle: post.handle || '@trader',
       platform: post.platform || 'Community Alpha',
       time: 'Just now',
       content: post.content,
-      sentiment: post.sentiment,
+      sentiment: post.sentiment || 'bullish',
       upvotes: 1,
       commentCount: 0,
       isFollowed: true,
-      asset: post.asset,
-      tags: post.tags || ['#Alpha', '#Breakout']
+      asset: post.asset || 'BTC',
+      tags: post.tags || ['#Analysis', '#Alpha']
     };
     const updated = [newPost, ...all];
     this.setDiscussions(updated);
@@ -193,7 +195,7 @@ export class MarketCacheService {
     const all = this.getDiscussions();
     let newCount = 1;
     const updated = all.map(d => {
-      if (d.id === id) {
+      if (String(d.id) === String(id)) {
         newCount = (d.upvotes || 0) + 1;
         return { ...d, upvotes: newCount };
       }
@@ -204,26 +206,22 @@ export class MarketCacheService {
   }
 
   /**
-   * Refresh / Revalidate cache: simulates instant background synchronization
+   * Refresh / Revalidate cache: generates fresh live news and ticks
    */
   static async revalidate(symbol?: string): Promise<{ items: NewsItem[]; meta: CacheMetadata }> {
-    // Artificial 150ms network ping simulation instead of a 15-second hang
-    await new Promise(r => setTimeout(r, 150));
+    // Artificial 120ms realistic network synchronization
+    await new Promise(r => setTimeout(r, 120));
 
-    // Update timestamps and append slight random sentiment delta to simulate live tick
+    // Generate 1-2 new live stories
     const current = this.getNews().items;
-    const refreshed = current.map(item => ({
-      ...item,
-      cachedAt: Date.now()
-    }));
+    const freshStory1 = generateLiveNewsItem(symbol);
+    const freshStory2 = generateLiveNewsItem('ALL');
+    const updated = [freshStory1, freshStory2, ...current.slice(0, 48)];
 
-    this.setNews(refreshed);
+    this.setNews(updated);
     return this.getNews(symbol);
   }
 
-  /**
-   * Clear cache completely
-   */
   static clearAll(): void {
     memoryStore.clear();
     try {
@@ -231,6 +229,8 @@ export class MarketCacheService {
       localStorage.removeItem(CACHE_KEYS.DISCUSSIONS);
       localStorage.removeItem(CACHE_KEYS.META);
     } catch {}
+    this.setNews(INITIAL_NEWS);
+    this.setDiscussions(INITIAL_DISCUSSIONS);
   }
 
   static getTTL(): number {

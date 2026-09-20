@@ -1,6 +1,6 @@
 {
   "name": "Sentrune",
-  "description": "Quantitative Market Intelligence & Strategy Workstation with instant-cached financial news, smart asset price alerts, and dual casual/power trader analytics.",
+  "description": "Quantitative Market Intelligence & Strategy Workstation with instant-cached financial news, live stream feeds, high-precision technical charts, and market discussions.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

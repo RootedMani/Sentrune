@@ -2,14 +2,8 @@ import React from 'react';
 import { 
   Sliders, 
   X, 
-  Zap, 
-  BarChart2, 
-  Check, 
   Database, 
-  Trash2, 
-  RotateCw, 
-  ShieldCheck, 
-  Layers
+  Trash2
 } from 'lucide-react';
 import { useWorkstation } from '../context/WorkstationContext';
 import { MarketCacheService } from '../services/marketCache';
@@ -19,8 +13,6 @@ export const SettingsModal: React.FC = () => {
   const { 
     openSettingsModal, 
     setOpenSettingsModal, 
-    appMode, 
-    setAppMode, 
     showTechnicalMetadata, 
     setShowTechnicalMetadata,
     language,
@@ -35,7 +27,6 @@ export const SettingsModal: React.FC = () => {
   const handleClearCache = () => {
     MarketCacheService.clearAll();
     refreshFeeds();
-    alert('Cache storage flushed and re-warmed with fresh seeds.');
   };
 
   return (
@@ -52,7 +43,7 @@ export const SettingsModal: React.FC = () => {
             </div>
             <div>
               <h3 className="text-base font-bold text-white">Workstation Settings</h3>
-              <p className="text-xs text-slate-400">User experience profile & data caching</p>
+              <p className="text-xs text-slate-400">Quantitative indicators & data cache controls</p>
             </div>
           </div>
           <button
@@ -66,66 +57,7 @@ export const SettingsModal: React.FC = () => {
 
         {/* Modal Body */}
         <div className="p-5 space-y-5 overflow-y-auto max-h-[80vh]">
-          {/* Dedicated Mode Selection: Casual vs Power */}
-          <div className="space-y-2.5">
-            <label className="text-xs font-bold text-slate-200 uppercase tracking-wider block">
-              {t.experienceMode}
-            </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Casual Mode Card */}
-              <button
-                type="button"
-                id="select-casual-mode-card"
-                onClick={() => setAppMode('casual')}
-                className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer relative ${
-                  appMode === 'casual'
-                    ? 'bg-amber-950/30 border-amber-500/80 ring-1 ring-amber-500/40'
-                    : 'bg-[#050c17] border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                {appMode === 'casual' && (
-                  <div className="absolute top-3 right-3 text-amber-400">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
-                <div className="flex items-center gap-2 font-bold text-xs text-white">
-                  <Zap className="w-4 h-4 text-amber-400" />
-                  <span>Casual Trader</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
-                  {t.casualDesc}
-                </p>
-              </button>
-
-              {/* Power Mode Card */}
-              <button
-                type="button"
-                id="select-power-mode-card"
-                onClick={() => setAppMode('power')}
-                className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer relative ${
-                  appMode === 'power'
-                    ? 'bg-cyan-950/30 border-cyan-500/80 ring-1 ring-cyan-500/40'
-                    : 'bg-[#050c17] border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                {appMode === 'power' && (
-                  <div className="absolute top-3 right-3 text-cyan-400">
-                    <Check className="w-4 h-4" />
-                  </div>
-                )}
-                <div className="flex items-center gap-2 font-bold text-xs text-white">
-                  <BarChart2 className="w-4 h-4 text-cyan-400" />
-                  <span>Power Trader</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">
-                  {t.powerDesc}
-                </p>
-              </button>
-            </div>
-          </div>
-
-          {/* Dedicated Toggle for Technical Metadata */}
+          {/* Toggle for Technical Metadata */}
           <div className="p-3.5 rounded-xl bg-[#050c17] border border-slate-800 flex items-center justify-between gap-3">
             <div>
               <div className="text-xs font-bold text-slate-200">
@@ -165,7 +97,7 @@ export const SettingsModal: React.FC = () => {
             </div>
 
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Provides instant 0ms response time on initial page loads and asset transitions by leveraging local memory and storage caching.
+              Provides instant sub-millisecond response times on page loads and asset transitions by leveraging local memory and storage caching.
             </p>
 
             <div className="grid grid-cols-3 gap-2 text-center text-xs">

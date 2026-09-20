@@ -27,8 +27,7 @@ export const Sidebar: React.FC = () => {
     cacheMeta, 
     isRefreshing, 
     refreshFeeds,
-    setOpenSettingsModal,
-    appMode
+    setOpenSettingsModal
   } = useWorkstation();
 
   const { isDemo, openAuthModal } = useAuth();
@@ -248,7 +247,7 @@ export const Sidebar: React.FC = () => {
             className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors cursor-pointer text-[11px]"
           >
             <Sliders className="w-3.5 h-3.5" />
-            <span>Settings ({appMode === 'casual' ? 'Casual' : 'Pro'})</span>
+            <span>Settings</span>
           </button>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
             Zero-Cost Ready

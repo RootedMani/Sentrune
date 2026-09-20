@@ -15,11 +15,11 @@ import {
 import { useWorkstation } from '../context/WorkstationContext';
 
 export const PriceChart: React.FC = () => {
-  const { selectedAsset, timeframe, appMode, bars, theme } = useWorkstation();
+  const { selectedAsset, timeframe, setTimeframe, bars, theme } = useWorkstation();
   const [chartType, setChartType] = useState<'candles' | 'area'>('candles');
   const [showSMA20, setShowSMA20] = useState(true);
   const [showEMA50, setShowEMA50] = useState(true);
-  const [showBollinger, setShowBollinger] = useState(appMode === 'power');
+  const [showBollinger, setShowBollinger] = useState(false);
   const [showVolume, setShowVolume] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -306,6 +306,23 @@ export const PriceChart: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Timeframe switcher */}
+            <div className="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-0.5">
+              {(['1h', '1d', '1wk'] as const).map(tf => (
+                <button
+                  key={tf}
+                  onClick={() => setTimeframe(tf)}
+                  className={`px-2 py-0.5 text-xs font-semibold rounded uppercase transition-all cursor-pointer ${
+                    timeframe === tf
+                      ? 'bg-cyan-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  {tf === '1h' ? '1H' : tf === '1d' ? '1D' : '1W'}
+                </button>
+              ))}
+            </div>
+
             <div className="flex items-center bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-0.5">
               <button
                 onClick={() => setChartType('candles')}

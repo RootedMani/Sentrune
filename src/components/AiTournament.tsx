@@ -51,7 +51,7 @@ export const AiTournament: React.FC<AiTournamentProps> = ({
     setExpandedModelId(expandedModelId === id ? null : id);
   };
 
-  const tournament = tournamentData?.tournament;
+  const tournament = (tournamentData as any)?.tournament || tournamentData;
   const winner = tournament?.winner;
   const models = tournament?.models || [];
   const consensus = tournament?.consensus;

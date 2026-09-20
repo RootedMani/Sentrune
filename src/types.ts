@@ -116,7 +116,7 @@ export interface TechnicalIndicator {
   interpretation: string;
 }
 
-export type RealtimeConnectionStatus = 'connected' | 'connecting' | 'reconnecting' | 'disconnected' | 'error';
+export type RealtimeConnectionStatus = 'connected' | 'connecting' | 'reconnecting' | 'disconnected' | 'error' | 'fallback_polling';
 
 export interface LivePriceUpdate {
   asset_id: number;
@@ -277,6 +277,7 @@ export interface SentimentAggregate {
   window_end: string;
   window_hours: number;
   avg_sentiment: number;
+  sentiment_score?: number;
   mention_volume: number;
   sentiment_volatility: number;
   followed_avg_sentiment: number;
