@@ -22,6 +22,7 @@ export const Header: React.FC = () => {
     setLanguage, 
     theme, 
     setTheme, 
+    toggleTheme,
     setOpenAlertsModal,
     alerts
   } = useWorkstation();
@@ -112,7 +113,7 @@ export const Header: React.FC = () => {
         {/* Theme toggle */}
         <button
           id="header-theme-toggle"
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          onClick={toggleTheme}
           className="flex items-center gap-1.5 bg-slate-100 dark:bg-[#0c1a2d] hover:bg-slate-200 dark:hover:bg-[#12243d] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-md text-xs transition-colors cursor-pointer"
           title="Toggle Light / Dark mode"
         >

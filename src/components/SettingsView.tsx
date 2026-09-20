@@ -15,7 +15,8 @@ import {
   Zap, 
   BellRing,
   Layers,
-  Sparkles
+  Sparkles,
+  Monitor
 } from 'lucide-react';
 import { useWorkstation } from '../context/WorkstationContext';
 import { MarketCacheService } from '../services/marketCache';
@@ -28,7 +29,8 @@ export const SettingsView: React.FC = () => {
     language,
     setLanguage,
     theme,
-    setTheme,
+    themePreference,
+    setThemePreference,
     cacheMeta,
     refreshFeeds,
     counts,
@@ -301,34 +303,60 @@ export const SettingsView: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/80">
-              <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                {language === 'fa' ? 'پوسته بصری:' : 'Color Theme:'}
-              </span>
-              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
-                <button
-                  onClick={() => setTheme('dark')}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                    theme === 'dark'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Moon className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>{language === 'fa' ? 'تاریک' : 'Dark'}</span>
-                </button>
-                <button
-                  onClick={() => setTheme('light')}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                    theme === 'light'
-                      ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
-                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <Sun className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{language === 'fa' ? 'روشن' : 'Light'}</span>
-                </button>
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                  {language === 'fa' ? 'پوسته بصری:' : 'Color Theme:'}
+                </span>
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                  <button
+                    id="settings-theme-system-btn"
+                    onClick={() => setThemePreference('system')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      themePreference === 'system'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                    title="User system preference else white mode"
+                  >
+                    <Monitor className="w-3.5 h-3.5 text-cyan-500" />
+                    <span>{language === 'fa' ? 'سیستم (پیش‌فرض)' : 'System (Default)'}</span>
+                  </button>
+
+                  <button
+                    id="settings-theme-light-btn"
+                    onClick={() => setThemePreference('light')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      themePreference === 'light'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                    title="Light mode (White mode)"
+                  >
+                    <Sun className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{language === 'fa' ? 'روشن (سفید)' : 'Light (White)'}</span>
+                  </button>
+
+                  <button
+                    id="settings-theme-dark-btn"
+                    onClick={() => setThemePreference('dark')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      themePreference === 'dark'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                    title="Dark mode"
+                  >
+                    <Moon className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>{language === 'fa' ? 'تاریک' : 'Dark'}</span>
+                  </button>
+                </div>
               </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {language === 'fa' 
+                  ? 'حالت پیش‌فرض بر اساس تنظیمات سیستم‌عامل کاربر (تاریک/روشن) اعمال شده و در صورت عدم تعیین، روی حالت سفید تنظیم می‌گردد.'
+                  : 'Default option follows your device system preference, or defaults to white mode.'}
+              </p>
             </div>
           </div>
         </div>

@@ -13,23 +13,37 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem('sentrune_theme') as Theme | null;
-    if (saved && ['light', 'dark', 'system'].includes(saved)) {
-      return saved;
+    try {
+      const saved = localStorage.getItem('sentrune_theme') as Theme | null;
+      if (saved && ['light', 'dark', 'system'].includes(saved)) {
+        return saved;
+      }
+      return 'system'; // Default option: user's system preference else white mode
+    } catch {
+      return 'system';
     }
-    return 'dark'; // Default to dark for trading platform
   });
 
-  const [isDark, setIsDark] = useState<boolean>(true);
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('sentrune_theme');
+      if (saved === 'dark') return true;
+      if (saved === 'light') return false;
+      const media = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+      return media ? media.matches : false; // else white mode (false)
+    } catch {
+      return false;
+    }
+  });
 
   useEffect(() => {
     const root = document.documentElement;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const updateActualTheme = () => {
-      let resolvedDark = true;
+      let resolvedDark = false;
       if (theme === 'system') {
-        resolvedDark = mediaQuery.matches;
+        resolvedDark = !!(mediaQuery && mediaQuery.matches); // user's system preference else white mode
       } else {
         resolvedDark = theme === 'dark';
       }
@@ -39,15 +53,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         root.classList.add('dark');
         root.classList.remove('light');
         root.style.colorScheme = 'dark';
+        document.body.style.backgroundColor = '#050b14';
+        document.body.style.color = '#f1f5f9';
       } else {
         root.classList.remove('dark');
         root.classList.add('light');
         root.style.colorScheme = 'light';
+        document.body.style.backgroundColor = '#f8fafc';
+        document.body.style.color = '#0f172a';
       }
     };
 
     updateActualTheme();
-    localStorage.setItem('sentrune_theme', theme);
+    try {
+      localStorage.setItem('sentrune_theme', theme);
+    } catch {}
 
     const listener = () => {
       if (theme === 'system') {
@@ -64,7 +84,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setThemeState((prev) => {
+      if (prev === 'system') {
+        const isSysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        return isSysDark ? 'light' : 'dark';
+      }
+      return prev === 'dark' ? 'light' : 'dark';
+    });
   };
 
   return (

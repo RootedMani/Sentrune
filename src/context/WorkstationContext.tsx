@@ -3,6 +3,7 @@ import { Asset, AppMode, Language, CacheMetadata, NewsletterAlert, PriceBar, Tec
 import { INITIAL_ASSETS } from '../data/mockMarketData';
 import { MarketCacheService } from '../services/marketCache';
 import { EmailVerificationService } from '../services/emailVerification';
+import { useTheme, Theme as ThemePreference } from './ThemeContext';
 
 interface WorkstationContextType {
   selectedAsset: Asset;
@@ -34,7 +35,9 @@ interface WorkstationContextType {
   openSettingsModal: boolean;
   setOpenSettingsModal: (open: boolean) => void;
   theme: 'dark' | 'light';
+  themePreference: ThemePreference;
   setTheme: (t: 'dark' | 'light') => void;
+  setThemePreference: (pref: ThemePreference) => void;
   toggleTheme: () => void;
   bars: PriceBar[];
   technicals: TechnicalFeature[];
@@ -65,7 +68,17 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [language, setLanguage] = useState<Language>('en');
   const [activeTab, setActiveTab] = useState<string>('news');
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  
+  const { theme: themePref, isDark, setTheme: setThemeContext, toggleTheme } = useTheme();
+  const theme: 'dark' | 'light' = isDark ? 'dark' : 'light';
+  
+  const setTheme = useCallback((t: 'dark' | 'light') => {
+    setThemeContext(t);
+  }, [setThemeContext]);
+
+  const setThemePreference = useCallback((pref: ThemePreference) => {
+    setThemeContext(pref);
+  }, [setThemeContext]);
 
   const [openAlertsModal, setOpenAlertsModal] = useState(false);
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
@@ -81,7 +94,6 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
           setShowTechnicalMetadata(parsed.showTechnicalMetadata);
         }
         if (parsed.language) setLanguage(parsed.language);
-        if (parsed.theme) setTheme(parsed.theme);
       }
     } catch {}
   }, []);
@@ -100,29 +112,6 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
       );
     } catch {}
   }, [appMode, showTechnicalMetadata, language, theme]);
-
-  // Robust Theme Sync: Update DOM classList on html and body styling
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-      root.style.colorScheme = 'dark';
-      document.body.style.backgroundColor = '#050b14';
-      document.body.style.color = '#f1f5f9';
-    } else {
-      root.classList.remove('dark');
-      root.classList.add('light');
-      root.style.colorScheme = 'light';
-      document.body.style.backgroundColor = '#f8fafc';
-      document.body.style.color = '#0f172a';
-    }
-    localStorage.setItem('sentrune_theme', theme);
-  }, [theme]);
-
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  }, []);
 
   // When switching to power mode, auto-enable technical metadata
   useEffect(() => {
@@ -518,7 +507,9 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         openSettingsModal,
         setOpenSettingsModal,
         theme,
+        themePreference: themePref,
         setTheme,
+        setThemePreference,
         toggleTheme,
         bars,
         technicals,
