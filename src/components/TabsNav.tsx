@@ -8,6 +8,7 @@ import {
   Briefcase, 
   BellRing, 
   SlidersHorizontal,
+  BrainCircuit,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -22,6 +23,7 @@ export const TabsNav: React.FC = () => {
     { id: 'news', label: t.tabNews, icon: Newspaper },
     { id: 'price', label: t.tabPriceHistory, icon: LineChart },
     { id: 'technical', label: t.tabTechnical, icon: Activity },
+    { id: 'predictions', label: t.tabPredictions, icon: BrainCircuit },
     { id: 'sentiment', label: t.tabSentiment, icon: HeartHandshake },
     { id: 'social', label: t.tabCommunity, icon: MessageSquare },
     { id: 'overview', label: t.tabStrategy, icon: Briefcase },

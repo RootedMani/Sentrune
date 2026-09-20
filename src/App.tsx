@@ -1,5 +1,7 @@
 import React from 'react';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { WorkstationProvider, useWorkstation } from './context/WorkstationContext';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
@@ -7,10 +9,12 @@ import { TabsNav } from './components/TabsNav';
 import { NewsTable } from './components/NewsTable';
 import { PriceChart } from './components/PriceChart';
 import { TechnicalAnalysis } from './components/TechnicalAnalysis';
+import { AiPredictionsView } from './components/AiPredictionsView';
 import { SentimentPulse } from './components/SentimentPulse';
 import { SocialPulse } from './components/SocialPulse';
 import { MarketOverview } from './components/MarketOverview';
 import { AlertsView } from './components/AlertsView';
+import { SettingsView } from './components/SettingsView';
 import { NewsletterAlertsModal } from './components/NewsletterAlertsModal';
 import { AccountModal } from './components/AccountModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -48,11 +52,12 @@ const WorkstationMain: React.FC = () => {
             {activeTab === 'news' && <NewsTable />}
             {activeTab === 'price' && <PriceChart />}
             {activeTab === 'technical' && <TechnicalAnalysis />}
+            {activeTab === 'predictions' && <AiPredictionsView />}
             {activeTab === 'sentiment' && <SentimentPulse />}
             {activeTab === 'social' && <SocialPulse />}
             {activeTab === 'overview' && <MarketOverview />}
             {activeTab === 'alerts' && <AlertsView />}
-            {activeTab === 'settings' && <MarketOverview />}
+            {activeTab === 'settings' && <SettingsView />}
           </ErrorBoundary>
         </main>
       </div>
@@ -67,10 +72,16 @@ const WorkstationMain: React.FC = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <WorkstationProvider>
-        <WorkstationMain />
-      </WorkstationProvider>
-    </AuthProvider>
+    <ErrorBoundary fallbackTitle="Sentrune Workstation Shell">
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <WorkstationProvider>
+              <WorkstationMain />
+            </WorkstationProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

@@ -93,7 +93,7 @@ export const Header: React.FC = () => {
         >
           <Bell className="w-3.5 h-3.5 text-cyan-500" />
           <span className="hidden md:inline">Alerts</span>
-          {alerts.length > 0 && (
+          {Array.isArray(alerts) && alerts.length > 0 && (
             <span className="w-4 h-4 rounded-full bg-cyan-600 text-white text-[10px] font-bold flex items-center justify-center">
               {alerts.length}
             </span>

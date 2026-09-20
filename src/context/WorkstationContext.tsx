@@ -23,7 +23,9 @@ interface WorkstationContextType {
   alerts: NewsletterAlert[];
   addAlert: (alert: Omit<NewsletterAlert, 'id' | 'createdAt' | 'dispatchCount'>) => NewsletterAlert;
   removeAlert: (id: string) => void;
+  deleteAlert?: (id: string) => void;
   toggleAlert: (id: string) => void;
+  toggleAlertActive?: (id: string) => void;
   verifyAlertEmail: (id: string, code: string) => boolean;
   resendVerificationCode: (id: string) => string;
   simulateDispatchAlert: (id: string) => Promise<string>;
@@ -349,7 +351,10 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [alerts, setAlerts] = useState<NewsletterAlert[]>(() => {
     try {
       const stored = localStorage.getItem(ALERTS_STORAGE_KEY);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
     } catch {}
     return [
       {
@@ -502,7 +507,9 @@ export const WorkstationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         alerts,
         addAlert,
         removeAlert,
+        deleteAlert: removeAlert,
         toggleAlert,
+        toggleAlertActive: toggleAlert,
         verifyAlertEmail,
         resendVerificationCode,
         simulateDispatchAlert,

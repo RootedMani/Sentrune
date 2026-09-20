@@ -27,6 +27,7 @@ export const Sidebar: React.FC = () => {
     cacheMeta, 
     isRefreshing, 
     refreshFeeds,
+    setActiveTab,
     setOpenSettingsModal
   } = useWorkstation();
 
@@ -243,7 +244,7 @@ export const Sidebar: React.FC = () => {
         <div className="mt-3 pt-2.5 border-t border-slate-200 dark:border-slate-800/60 flex items-center justify-between">
           <button
             id="sidebar-settings-btn"
-            onClick={() => setOpenSettingsModal(true)}
+            onClick={() => setActiveTab('settings')}
             className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors cursor-pointer text-[11px]"
           >
             <Sliders className="w-3.5 h-3.5" />

@@ -6,6 +6,7 @@ export interface Asset {
   name: string;
   type?: AssetType;
   asset_type?: 'stock' | 'crypto';
+  category?: 'stock' | 'crypto' | 'equities' | string;
   price?: number;
   change?: number;
   changePercent?: number;
@@ -410,9 +411,22 @@ export interface ModelBenchmarkResult {
 }
 
 export interface AiTournamentResponse {
-  winner: ModelBenchmarkResult;
-  models: ModelBenchmarkResult[];
-  consensus: {
+  success?: boolean;
+  tournament?: {
+    asset?: { id?: number; symbol: string; name: string };
+    interval?: string;
+    winner: ModelBenchmarkResult;
+    models: ModelBenchmarkResult[];
+    consensus: {
+      action: 'BUY' | 'SELL' | 'HOLD';
+      agreementScorePct: number;
+      avgConfidence: number;
+      syntheticConviction: string;
+    };
+  };
+  winner?: ModelBenchmarkResult;
+  models?: ModelBenchmarkResult[];
+  consensus?: {
     action: 'BUY' | 'SELL' | 'HOLD';
     agreementScorePct: number;
     avgConfidence: number;

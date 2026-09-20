@@ -21,6 +21,7 @@ export const TRANSLATIONS = {
     // Tabs
     tabPriceHistory: 'Price & History',
     tabTechnical: 'Technical Analysis',
+    tabPredictions: 'AI Predictions',
     tabSentiment: 'Market Sentiment',
     tabNews: 'Financial News',
     tabCommunity: 'Community & Social Pulse',
@@ -92,6 +93,7 @@ export const TRANSLATIONS = {
     // Tabs
     tabPriceHistory: 'قیمت و تاریخچه',
     tabTechnical: 'تحلیل تکنیکال',
+    tabPredictions: 'پیش‌بینی هوش مصنوعی',
     tabSentiment: 'سنتیمنت بازار',
     tabNews: 'اخبار مالی',
     tabCommunity: 'نبض جامعه و شبکه‌های اجتماعی',
