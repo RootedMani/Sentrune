@@ -279,7 +279,7 @@ Sentrune/
 
 **Mani Jabari**  
 - **GitHub**: [@RootedMani](https://github.com/RootedMani)  
-- **Email**: manijabaripersonal2@gmail.com  
+- **Email**: [Mani.Jabari.Personal@gmail.com](mailto:Mani.Jabari.Personal@gmail.com)  
 
 Developed as an advanced demonstration of **Quantitative Software Engineering**, **Time-Series Machine Learning**, and **High-Throughput Full-Stack Financial Systems**.
 
